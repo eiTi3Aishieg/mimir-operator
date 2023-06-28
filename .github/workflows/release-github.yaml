@@ -1,0 +1,107 @@
+name: release
+
+on:
+  push:
+    tags:
+      - v0.*
+
+jobs:
+  helm:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v3
+
+      - name: Prepare
+        run: |
+          # OCI standard enforces lower-case paths
+          GHCR_REPO=$(echo "ghcr.io/${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          HELM_REPO=$(echo "oci://ghcr.io/${{ github.repository_owner }}/helm-charts" | tr '[:upper:]' '[:lower:]')
+          echo "GHCR_REPO=$GHCR_REPO" >> $GITHUB_ENV
+          echo "HELM_REPO=$HELM_REPO" >> $GITHUB_ENV
+
+      #- name: Publish Helm charts
+      #  run: |
+      #    cd deploy/helm
+      #    yq -i '.image.repository = "${{ env.GHCR_REPO }}"' mimir-operator/values.yaml
+      #    helm registry login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
+      #    helm package --app-version ${{ github.ref_name }} --version ${{ github.ref_name }} mimir-operator
+      #    helm push mimir-operator-${{ github.ref_name }}.tgz ${{ env.HELM_REPO }}
+
+  kustomize:
+    runs-on: ubuntu-latest
+    steps:
+      - name: install flux
+        uses: fluxcd/flux2/action@v0.41.2
+      - name: Clone repo
+        uses: actions/checkout@v3
+
+      - name: Prepare
+        run: |
+          # OCI standard enforces lower-case paths
+          KUSTOMIZE_REPO=$(echo "oci://ghcr.io/${{ github.repository_owner }}/kustomize/mimir-operator" | tr '[:upper:]' '[:lower:]')
+          GHCR_REPO=$(echo "ghcr.io/${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "KUSTOMIZE_REPO=$KUSTOMIZE_REPO" >> $GITHUB_ENV
+          echo "GHCR_REPO=$GHCR_REPO" >> $GITHUB_ENV
+      - name: update-kustomize-image
+        run: |
+          # Install kustomize
+          make kustomize
+          # Update image to match the new image and tag
+          cd deploy/kustomize/base
+          kustomize edit set image ghcr.io/AmiditeX/mimir-operator=${{ env.GHCR_REPO }}:${{ github.ref_name }}
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Publish Kustomize OCI artifact to GHCR
+        run: |
+          flux push artifact ${{ env.KUSTOMIZE_REPO }}:${{ github.ref_name }} \
+            --path="./deploy/kustomize" \
+            --source="${{ github.event.repository.html_url }}" \
+            --revision="${GITHUB_REF_NAME}/${GITHUB_SHA}"
+
+  image:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repo
+        uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-go@v4
+        with:
+          go-version-file: "go.mod"
+          cache: true
+
+      - uses: ko-build/setup-ko@v0.6
+        with:
+          version: v0.14.1
+
+      - name: Prepare
+        run: |
+          # OCI standard enforces lower-case paths
+          GHCR_REPO=$(echo "ghcr.io/${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          echo "GHCR_REPO=$GHCR_REPO" >> $GITHUB_ENV
+          echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
+
+      - name: Build and push
+        env:
+          KO_DOCKER_REPO: ${{ env.GHCR_REPO }}
+        run: |
+          ko build --sbom=none --bare --platform linux/arm64,linux/arm/v7,linux/amd64 -t ${{ github.ref_name }} \
+            --image-label org.opencontainers.image.title=mimir-operator \
+            --image-label org.opencontainers.image.description="An operator for Mimir that manages Mimir Tenants through Kubernetes" \
+            --image-label org.opencontainers.image.url=${{ github.server_url }}/${{ github.repository }} \
+            --image-label org.opencontainers.image.revision=${{ github.sha }} \
+            --image-label org.opencontainers.image.version=${{ github.ref_name }} \
+            --image-label org.opencontainers.image.created=${{ env.BUILD_DATE }}

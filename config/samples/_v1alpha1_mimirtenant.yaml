@@ -1,0 +1,17 @@
+apiVersion: mimir.grafana.com/v1alpha1
+kind: MimirTenant
+metadata:
+  labels:
+    app.kubernetes.io/name: mimirtenant
+    app.kubernetes.io/instance: mimirtenant-sample
+    app.kubernetes.io/part-of: mimir-operator
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: mimir-operator
+  name: mimirtenant-sample
+spec:
+  id: "tenant1"
+  url: "http://10.233.50.128"
+  rules:
+    selectors:
+      matchLabels:
+        helm.sh/chart: loki-4.10.0
