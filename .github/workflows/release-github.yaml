@@ -5,6 +5,10 @@ on:
     tags:
       - v0.*
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
 jobs:
   helm:
     runs-on: ubuntu-latest
@@ -63,45 +67,33 @@ jobs:
             --source="${{ github.event.repository.html_url }}" \
             --revision="${GITHUB_REF_NAME}/${GITHUB_SHA}"
 
-  image:
+  build-and-push-image:
     runs-on: ubuntu-latest
-    steps:
-      - name: Clone repo
-        uses: actions/checkout@v3
-        with:
-          submodules: recursive
+    permissions:
+      contents: read
+      packages: write
 
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
         with:
-          registry: ghcr.io
+          registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: actions/setup-go@v4
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
         with:
-          go-version-file: "go.mod"
-          cache: true
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
-      - uses: ko-build/setup-ko@v0.6
+      - name: Build and push Docker image
+        uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
         with:
-          version: v0.14.1
-
-      - name: Prepare
-        run: |
-          # OCI standard enforces lower-case paths
-          GHCR_REPO=$(echo "ghcr.io/${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-          echo "GHCR_REPO=$GHCR_REPO" >> $GITHUB_ENV
-          echo "BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_ENV
-
-      - name: Build and push
-        env:
-          KO_DOCKER_REPO: ${{ env.GHCR_REPO }}
-        run: |
-          ko build --sbom=none --bare --platform linux/arm64,linux/arm/v7,linux/amd64 -t ${{ github.ref_name }} \
-            --image-label org.opencontainers.image.title=mimir-operator \
-            --image-label org.opencontainers.image.description="An operator for Mimir that manages Mimir Tenants through Kubernetes" \
-            --image-label org.opencontainers.image.url=${{ github.server_url }}/${{ github.repository }} \
-            --image-label org.opencontainers.image.revision=${{ github.sha }} \
-            --image-label org.opencontainers.image.version=${{ github.ref_name }} \
-            --image-label org.opencontainers.image.created=${{ env.BUILD_DATE }}
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
