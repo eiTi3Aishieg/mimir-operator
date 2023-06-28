@@ -86,3 +86,19 @@ To select all the rules available on the cluster:
  rules:
     selectors: {}
 ```
+
+More complex selections can be done by combining selectors:
+```yaml
+  rules:
+    selectors:
+      matchLabels:
+        version: v1
+      matchExpressions:
+      - key: group
+        operator: In
+        values:
+          - kubernetes
+          - node
+          - watchdog
+```
+This would match any PrometheusRule with a label ```version=v1``` and a ```group``` label with any of the following values: ```[kubernetes, node, watchdog]```.
