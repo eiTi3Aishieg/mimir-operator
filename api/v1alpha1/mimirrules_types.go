@@ -4,32 +4,32 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// MimirTenantSpec defines the desired state of a MimirTenant
-type MimirTenantSpec struct {
-	// ID is the identifier of the MimirTenant
+// MimirRulesSpec defines the desired state of MimirRules
+type MimirRulesSpec struct {
+	// ID is the identifier of the tenant in the Mimir Ruler
 	ID string `json:"id"`
 
-	// URL is the URL of the remote Mimir
+	// URL is the URL of the remote Mimir Ruler
 	URL string `json:"url"`
 
-	// Rules that are linked to that tenant
-	Rules *Rules `json:"rules,omitempty"`
+	// Rules that should be linked to the tenant ID in the Mimir Ruler
+	Rules *Rules `json:"rules"`
 }
 
-// Rules that are associated to a tenant and that should be synchronized to Mimir
+// Rules that are associated to a tenant and that should be synchronized to the Mimir Ruler
 // The rules must be defined in CRDs of type "PrometheusRule" and this resource should
 // only be used to target those PrometheusRules by referencing them through selectors
 type Rules struct {
 	Selectors *metav1.LabelSelector `json:"selectors,omitempty"`
 }
 
-// MimirTenantStatus defines the observed state of MimirTenant
-type MimirTenantStatus struct {
+// MimirRulesStatus defines the observed state of MimirRules
+type MimirRulesStatus struct {
 	// RulesStatus is the synchronization status of the rules linked to that tenant
 	RulesStatus *RulesStatus `json:"rulesStatus,omitempty"`
 }
 
-// RulesStatus defines the status of the synchronization of Rules associated with a MimirTenant
+// RulesStatus defines the status of the synchronization of Rules associated with a MimirRules
 type RulesStatus struct {
 	// Status describes whether the rules are synchronized
 	Status string `json:"status,omitempty"`
@@ -41,24 +41,24 @@ type RulesStatus struct {
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
 
-// MimirTenant is the Schema for the mimirtenants API
-type MimirTenant struct {
+// MimirRules is the Schema for the MimirRules API
+type MimirRules struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   MimirTenantSpec   `json:"spec"`
-	Status MimirTenantStatus `json:"status,omitempty"`
+	Spec   MimirRulesSpec   `json:"spec"`
+	Status MimirRulesStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 
-// MimirTenantList contains a list of MimirTenant
-type MimirTenantList struct {
+// MimirRulesList contains a list of MimirRules
+type MimirRulesList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []MimirTenant `json:"items"`
+	Items           []MimirRules `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&MimirTenant{}, &MimirTenantList{})
+	SchemeBuilder.Register(&MimirRules{}, &MimirRulesList{})
 }

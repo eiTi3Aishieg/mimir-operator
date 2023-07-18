@@ -59,7 +59,7 @@ func ListRules(ctx context.Context, tenant, url string) (string, error) {
 	return stdout, nil
 }
 
-func SynchronizeRule(ctx context.Context, ruleName, ruleFile, tenant, url string) error {
+func SynchronizeRules(ctx context.Context, ruleName, ruleFile, tenant, url string) error {
 	args := []string{"rules", "sync"}
 	args = append(args, getDefaultSyncArgs(tenant, url, ruleName)...)
 	args = append(args, ruleFile)

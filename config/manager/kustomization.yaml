@@ -5,4 +5,4 @@ kind: Kustomization
 images:
 - name: controller
   newName: ghcr.io/amiditex/mimir-operator
-  newTag: v0.0.1
+  newTag: latest

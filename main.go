@@ -56,7 +56,7 @@ func main() {
 		Port:                   9443,
 		HealthProbeBindAddress: probeAddr,
 		LeaderElection:         enableLeaderElection,
-		LeaderElectionID:       "0f364504.mimir.grafana.com",
+		LeaderElectionID:       "0f364504.mimir.randgen.xyz",
 		// LeaderElectionReleaseOnCancel defines if the leader should step down voluntarily
 		// when the Manager ends. This requires the binary to immediately end when the
 		// Manager is stopped, otherwise, this setting is unsafe. Setting this significantly
@@ -74,11 +74,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controllers.MimirTenantReconciler{
+	if err = (&controllers.MimirRulesReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "MimirTenant")
+		setupLog.Error(err, "unable to create controller", "controller", "mimirrules")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder

@@ -3,7 +3,7 @@ The Mimir Operator is a Kubernetes operator to control Mimir tenants using CRDs.
 
 ## Description
 Currently the operator is capable of:
-- connecting to a remote Mimir instance
+- connecting to remote Mimir instances
 - loading alerting rules for a specific Mimir tenant depending on labels
 
 Read the documentation [here](docs/index.md).
