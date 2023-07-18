@@ -6,9 +6,9 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
-  - mimir.grafana.com
+  - mimir.randgen.xyz
   resources:
-  - mimirtenants
+  - mimirrules
   verbs:
   - create
   - delete
@@ -18,15 +18,15 @@ rules:
   - update
   - watch
 - apiGroups:
-  - mimir.grafana.com
+  - mimir.randgen.xyz
   resources:
-  - mimirtenants/finalizers
+  - mimirrules/finalizers
   verbs:
   - update
 - apiGroups:
-  - mimir.grafana.com
+  - mimir.randgen.xyz
   resources:
-  - mimirtenants/status
+  - mimirrules/status
   verbs:
   - get
   - patch

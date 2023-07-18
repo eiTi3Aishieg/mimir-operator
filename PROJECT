@@ -2,7 +2,7 @@
 # This file is used to track the info used to scaffold your project
 # and allow the plugins properly work.
 # More info: https://book.kubebuilder.io/reference/project-config.html
-domain: mimir.grafana.com
+domain: mimir.randgen.xyz
 layout:
 - go.kubebuilder.io/v3
 plugins:
@@ -15,8 +15,8 @@ resources:
     crdVersion: v1
     namespaced: true
   controller: true
-  domain: mimir.grafana.com
-  kind: MimirTenant
+  domain: mimir.randgen.xyz
+  kind: MimirRules
   path: mimir-operator/api/v1alpha1
   version: v1alpha1
 version: "3"

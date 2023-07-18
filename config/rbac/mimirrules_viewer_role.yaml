@@ -1,27 +1,27 @@
-# permissions for end users to view mimirtenants.
+# permissions for end users to view mimirrules.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   labels:
     app.kubernetes.io/name: clusterrole
-    app.kubernetes.io/instance: mimirtenant-viewer-role
+    app.kubernetes.io/instance: mimirrules-viewer-role
     app.kubernetes.io/component: rbac
     app.kubernetes.io/created-by: mimir-operator
     app.kubernetes.io/part-of: mimir-operator
     app.kubernetes.io/managed-by: kustomize
-  name: mimirtenant-viewer-role
+  name: mimirrules-viewer-role
 rules:
 - apiGroups:
-  - mimir.grafana.com
+  - mimir.randgen.xyz
   resources:
-  - mimirtenants
+  - mimirrules
   verbs:
   - get
   - list
   - watch
 - apiGroups:
-  - mimir.grafana.com
+  - mimir.randgen.xyz
   resources:
-  - mimirtenants/status
+  - mimirrules/status
   verbs:
   - get

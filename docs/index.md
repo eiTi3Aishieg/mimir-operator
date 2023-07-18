@@ -4,22 +4,22 @@ The Mimir Operator is a Kubernetes operator to control Mimir tenants using CRDs.
 
 ## Available CRDs
 
-### MimirTenant
+### MimirRules
 
-The MimirTenant CRD allows the remote control of a tenant in a Mimir instance from Kubernetes.  
+The MimirRules CRD allows the remote control of Rules for a specific tenant in a Mimir Ruler from Kubernetes.  
 
 
 The general structure of the CRD is as follows:
 
 ```yaml
-apiVersion: mimir.grafana.com/v1alpha1
-kind: MimirTenant
+apiVersion: mimir.randgen.xyz/v1alpha1
+kind: MimirRules
 metadata:
-  name: mimirtenant-sample
+  name: mimirrules-sample
   namespace: default
 spec:
-  id: "tenant1" # ID of the tenant in Mimir (X-ScopeOrg-ID header)
-  url: "http://mimir.instance.com" # URL of the Mimir instance, used by the operator to connect and operate on the tenants
+  id: "tenant1" # ID of the tenant in the Mimir Ruler (X-ScopeOrg-ID header)
+  url: "http://mimir.instance.com" # URL of the Mimir Ruler instance, used by the operator to connect and operate on the tenants
 
   # The Rules section is used to install alerting rules on a tenant. 
   # The rules must be defined on the Kubernetes Cluster using "PrometheusRules" from the PrometheusOperator (https://github.com/prometheus-operator/prometheus-operator)
@@ -34,9 +34,9 @@ spec:
 
 ### Installing Prometheus Rules for a Tenant
 
-**PrometheusRules** are selected using selectors to determine what should be installed in the Mimir ruler for the tenant. Once all the rules have been filtered using the selectors, they are synced with the remote Mimir instance.
+**PrometheusRules** are selected using selectors to determine what should be installed in the Mimir Ruler for the tenant. Once all the rules have been filtered using the selectors, they are synced with the remote Mimir instance.
 
-In the Mimir ruler, alerts are grouped in "groups", which are themselves grouped in "namespaces". The name of a namespace is computed by taking the Kubernetes namespace of the PrometheusRule that was used to generate the Mimir rule, and appending the name of the Kubernetes PrometheusRule.
+In the Mimir Ruler, alerts are grouped in "groups", which are themselves grouped in "namespaces". The name of a namespace is computed by taking the Kubernetes namespace of the PrometheusRule that was used to generate the Mimir rule, and appending the name of the Kubernetes PrometheusRule.
 
 In the following example, the **loki-alerts** PrometheusRule will be installed in the Mimir tenant under the namespace *alerts-loki-alerts", with one group named "loki_alerts".
 
@@ -66,10 +66,10 @@ spec:
         severity: critical
 
 ---
-apiVersion: mimir.grafana.com/v1alpha1
-kind: MimirTenant
+apiVersion: mimir.randgen.xyz/v1alpha1
+kind: MimirRules
 metadata:
-  name: mimirtenant-sample
+  name: mimirrules-sample
   namespace: default
 spec:
   id: "loki-tenant"
@@ -86,19 +86,3 @@ To select all the rules available on the cluster:
  rules:
     selectors: {}
 ```
-
-More complex selections can be done by combining selectors:
-```yaml
-  rules:
-    selectors:
-      matchLabels:
-        version: v1
-      matchExpressions:
-      - key: group
-        operator: In
-        values:
-          - kubernetes
-          - node
-          - watchdog
-```
-This would match any PrometheusRule with a label ```version=v1``` and a ```group``` label with any of the following values: ```[kubernetes, node, watchdog]```.

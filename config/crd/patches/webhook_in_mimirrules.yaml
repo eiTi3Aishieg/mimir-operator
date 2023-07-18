@@ -2,7 +2,7 @@
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
-  name: mimirtenants.mimir.grafana.com
+  name: mimirrules.mimir.randgen.xyz
 spec:
   conversion:
     strategy: Webhook

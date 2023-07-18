@@ -5,20 +5,20 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.11.1
   creationTimestamp: null
-  name: mimirtenants.mimir.grafana.com
+  name: mimirrules.mimir.randgen.xyz
 spec:
-  group: mimir.grafana.com
+  group: mimir.randgen.xyz
   names:
-    kind: MimirTenant
-    listKind: MimirTenantList
-    plural: mimirtenants
-    singular: mimirtenant
+    kind: MimirRules
+    listKind: MimirRulesList
+    plural: mimirrules
+    singular: mimirrules
   scope: Namespaced
   versions:
   - name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: MimirTenant is the Schema for the mimirtenants API
+        description: MimirRules is the Schema for the MimirRules API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -33,13 +33,14 @@ spec:
           metadata:
             type: object
           spec:
-            description: MimirTenantSpec defines the desired state of a MimirTenant
+            description: MimirRulesSpec defines the desired state of MimirRules
             properties:
               id:
-                description: ID is the identifier of the MimirTenant
+                description: ID is the identifier of the tenant in the Mimir Ruler
                 type: string
               rules:
-                description: Rules that are linked to that tenant
+                description: Rules that should be linked to the tenant ID in the Mimir
+                  Ruler
                 properties:
                   selectors:
                     description: A label selector is a label query over a set of resources.
@@ -91,14 +92,15 @@ spec:
                     x-kubernetes-map-type: atomic
                 type: object
               url:
-                description: URL is the URL of the remote Mimir
+                description: URL is the URL of the remote Mimir Ruler
                 type: string
             required:
             - id
+            - rules
             - url
             type: object
           status:
-            description: MimirTenantStatus defines the observed state of MimirTenant
+            description: MimirRulesStatus defines the observed state of MimirRules
             properties:
               rulesStatus:
                 description: RulesStatus is the synchronization status of the rules
