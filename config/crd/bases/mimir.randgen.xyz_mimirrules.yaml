@@ -15,7 +15,11 @@ spec:
     singular: mimirrules
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - jsonPath: .status.status
+      name: Status
+      type: string
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: MimirRules is the Schema for the MimirRules API
@@ -121,6 +125,8 @@ spec:
                         type: object
                     type: object
                     x-kubernetes-map-type: atomic
+                required:
+                - selectors
                 type: object
               url:
                 description: URL is the URL of the remote Mimir Ruler
@@ -131,19 +137,15 @@ spec:
             - url
             type: object
           status:
-            description: MimirRulesStatus defines the observed state of MimirRules
+            description: MimirRulesStatus defines the status of the synchronization
+              of Rules associated with a MimirRules
             properties:
-              rulesStatus:
-                description: RulesStatus is the synchronization status of the rules
-                  linked to that tenant
-                properties:
-                  error:
-                    description: Error describes the last synchronization error
-                    type: string
-                  status:
-                    description: Status describes whether the rules are synchronized
-                    type: string
-                type: object
+              error:
+                description: Error describes the last synchronization error
+                type: string
+              status:
+                description: Status describes whether the rules are synchronized
+                type: string
             type: object
         required:
         - spec

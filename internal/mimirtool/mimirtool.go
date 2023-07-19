@@ -25,15 +25,15 @@ type Authentication struct {
 }
 
 func callTool(ctx context.Context, auth *Authentication, args ...string) (string, string, error) {
+	log.FromContext(ctx).Info("Running CLI", "parameters", args)
+
+	cmd := exec.Command(toolName, args...)
+
 	// Do not append the auth args to the other args BEFORE we log them as to not leak anything sensitive into the logs
 	if auth != nil {
 		authArgs := getAuthArgs(auth)
 		args = append(args, authArgs...)
 	}
-
-	log.FromContext(ctx).Info("Running CLI", "parameters", args)
-
-	cmd := exec.Command(toolName, args...)
 
 	var stderr, stdout bytes.Buffer
 	cmd.Stderr = &stderr

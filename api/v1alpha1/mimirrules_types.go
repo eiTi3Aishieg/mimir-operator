@@ -24,7 +24,7 @@ type MimirRulesSpec struct {
 // The rules must be defined in CRDs of type "PrometheusRule" and this resource should
 // only be used to target those PrometheusRules by referencing them through selectors
 type Rules struct {
-	Selectors *metav1.LabelSelector `json:"selectors,omitempty"`
+	Selectors *metav1.LabelSelector `json:"selectors"`
 }
 
 // Auth contains configuration to set up authentication on the remote Mimir Ruler endpoint
@@ -44,14 +44,8 @@ type Auth struct {
 	TokenSecretRef *v1.LocalObjectReference `json:"tokenSecretRef,omitempty"`
 }
 
-// MimirRulesStatus defines the observed state of MimirRules
+// MimirRulesStatus defines the status of the synchronization of Rules associated with a MimirRules
 type MimirRulesStatus struct {
-	// RulesStatus is the synchronization status of the rules linked to that tenant
-	RulesStatus *RulesStatus `json:"rulesStatus,omitempty"`
-}
-
-// RulesStatus defines the status of the synchronization of Rules associated with a MimirRules
-type RulesStatus struct {
 	// Status describes whether the rules are synchronized
 	Status string `json:"status,omitempty"`
 
@@ -61,6 +55,7 @@ type RulesStatus struct {
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+kubebuilder:printcolumn:name="Status",type=string,JSONPath=`.status.status`
 
 // MimirRules is the Schema for the MimirRules API
 type MimirRules struct {

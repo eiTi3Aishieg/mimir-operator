@@ -57,7 +57,8 @@ func (r *MimirRulesReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		// The object is being deleted
 		if controllerutil.ContainsFinalizer(mr, mimirFinalizer) {
 			if err := r.handleDeletion(ctx, mr); err != nil {
-				return ctrl.Result{}, err
+				// Status is set only on failure to delete (the status is going to be deleted anyway if it succeeds)
+				return ctrl.Result{}, r.SetStatus(ctx, mr, err)
 			}
 
 			// Remove our finalizer from the list and update it
@@ -74,7 +75,8 @@ func (r *MimirRulesReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 // any creation of a new MimirRules in the API. It is also called periodically for scheduled
 // reconciliation and at the startup of the controller.
 func (r *MimirRulesReconciler) handleReconcile(ctx context.Context, mr *domain.MimirRules) error {
-	if err := r.reconcileRules(ctx, mr); err != nil {
+	reconciliationError := r.reconcileRules(ctx, mr)
+	if err := r.SetStatus(ctx, mr, reconciliationError); err != nil {
 		return err
 	}
 
@@ -85,36 +87,39 @@ func (r *MimirRulesReconciler) handleReconcile(ctx context.Context, mr *domain.M
 func (r *MimirRulesReconciler) handleDeletion(ctx context.Context, mr *domain.MimirRules) error {
 	log.FromContext(ctx).Info("Running reconciliation on deletion of a MimirRules")
 
-	if mr.Spec.Rules != nil {
-		log.FromContext(ctx).Info("Deleting rules from Mimir")
-
-		auth, err := utils.ExtractAuth(ctx, r.Client, mr.Spec.Auth, mr.ObjectMeta.Namespace)
-		if err != nil {
-			return fmt.Errorf("failed to extract authentication settings: %w", err)
-		}
-
-		return r.deleteRulesForTenant(ctx, auth, mr)
+	auth, err := utils.ExtractAuth(ctx, r.Client, mr.Spec.Auth, mr.ObjectMeta.Namespace)
+	if err != nil {
+		return fmt.Errorf("failed to extract authentication settings: %w", err)
 	}
 
-	return nil
+	return r.deleteRulesForTenant(ctx, auth, mr)
 }
 
 // reconcileRules ensures Mimir is synced with the PrometheusRules associated with a MimirRules
 func (r *MimirRulesReconciler) reconcileRules(ctx context.Context, mr *domain.MimirRules) error {
-	if mr.Spec.Rules != nil && mr.Spec.Rules.Selectors != nil {
-		log.FromContext(ctx).Info("Running reconciliation of the rules")
+	log.FromContext(ctx).Info("Running reconciliation of the rules")
 
-		auth, err := utils.ExtractAuth(ctx, r.Client, mr.Spec.Auth, mr.ObjectMeta.Namespace)
-		if err != nil {
-			return fmt.Errorf("failed to extract authentication settings: %w", err)
-		}
-
-		if err := r.syncRulesToRuler(ctx, auth, mr); err != nil {
-			return err
-		}
+	auth, err := utils.ExtractAuth(ctx, r.Client, mr.Spec.Auth, mr.ObjectMeta.Namespace)
+	if err != nil {
+		return fmt.Errorf("failed to extract authentication settings: %w", err)
 	}
 
-	return nil
+	return r.syncRulesToRuler(ctx, auth, mr)
+}
+
+// SetStatus updates the status of MimirRules after reconciliation
+// If err is not nil, the error field is populated with the error and the status is set as "Failed"
+// Otherwise, status is set as "Synced"
+func (r *MimirRulesReconciler) SetStatus(ctx context.Context, mr *domain.MimirRules, err error) error {
+	if err != nil {
+		mr.Status.Status = "Failed"
+		mr.Status.Error = err.Error()
+	} else {
+		mr.Status.Status = "Synced"
+		mr.Status.Error = ""
+	}
+
+	return r.Status().Update(context.Background(), mr)
 }
 
 // SetupWithManager sets up the controller with the Manager.
