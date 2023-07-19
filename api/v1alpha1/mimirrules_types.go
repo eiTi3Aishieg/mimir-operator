@@ -1,6 +1,7 @@
 package v1alpha1
 
 import (
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -12,6 +13,9 @@ type MimirRulesSpec struct {
 	// URL is the URL of the remote Mimir Ruler
 	URL string `json:"url"`
 
+	// Authentication configuration if it is required by the remote endpoint
+	Auth *Auth `json:"auth,omitempty"`
+
 	// Rules that should be linked to the tenant ID in the Mimir Ruler
 	Rules *Rules `json:"rules"`
 }
@@ -21,6 +25,23 @@ type MimirRulesSpec struct {
 // only be used to target those PrometheusRules by referencing them through selectors
 type Rules struct {
 	Selectors *metav1.LabelSelector `json:"selectors,omitempty"`
+}
+
+// Auth contains configuration to set up authentication on the remote Mimir Ruler endpoint
+// There are two supported authentication schemes:
+//   - User/API key
+//   - Token (JWT/bearer)
+//
+// Token has precedence over any other authentication method
+// If the user/API key scheme is selected, the key can either be given directly or through
+// a secretRef pointing to a Kubernetes Secret containing the API key under the field "key"
+// The Token can also be given using a Secret containing the value under the field "token"
+type Auth struct {
+	User           string                   `json:"user,omitempty"`
+	Key            string                   `json:"key,omitempty"`
+	KeySecretRef   *v1.LocalObjectReference `json:"keySecretRef,omitempty"`
+	Token          string                   `json:"token,omitempty"`
+	TokenSecretRef *v1.LocalObjectReference `json:"tokenSecretRef,omitempty"`
 }
 
 // MimirRulesStatus defines the observed state of MimirRules

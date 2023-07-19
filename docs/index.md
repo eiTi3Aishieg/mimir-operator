@@ -2,6 +2,27 @@
 
 The Mimir Operator is a Kubernetes operator to control Mimir tenants using CRDs.
 
+## Authentication
+
+If the Mimir Endpoints are protected by authentication, the CRDs support an `auth` object allowing for various authentication methods:
+- User/key
+- Token (bearer/JWT)
+
+The auth object has the following format:
+```yaml
+auth:
+  tokenSecretRef: # Get the token from a secret in the namespace where the CR was deployed (secret key must be named "token")
+     name: "secret-mimir"
+  token: "token" # Plaintext token
+  keySecretRef: # Get the key from a secret in the namespace where the CR was deployed (secret key must be named "key")
+    name: "secret-mimir"
+  key: "key" # Plaintext key
+  user: "user" # Plaintext user
+```
+
+Token authentication (```tokenSecretRef``` OR ```token```) has precedence over any other authentication method (both schemes can't be used simultaneously).  
+User/API key authentication (```keySecretRef``` OR ```key``` and ```user```) must provide a user AND a key.
+
 ## Available CRDs
 
 ### MimirRules
@@ -20,7 +41,12 @@ metadata:
 spec:
   id: "tenant1" # ID of the tenant in the Mimir Ruler (X-ScopeOrg-ID header)
   url: "http://mimir.instance.com" # URL of the Mimir Ruler instance, used by the operator to connect and operate on the tenants
-
+  
+  # Authentication parameters if the endpoint is protected (see the Authentication section for more information)
+  # auth:
+  #   user: "user"
+  #   key: "user-key"
+  
   # The Rules section is used to install alerting rules on a tenant. 
   # The rules must be defined on the Kubernetes Cluster using "PrometheusRules" from the PrometheusOperator (https://github.com/prometheus-operator/prometheus-operator)
   # Any PrometheusRule that matches the selectors will be installed for the tenant in Mimir
@@ -83,6 +109,23 @@ spec:
 
 To select all the rules available on the cluster:
 ```yaml
- rules:
-    selectors: {}
+rules:
+  selectors: {}
 ```
+
+More complex selections can be done by combining selectors:
+```yaml
+  rules:
+    selectors:
+      matchLabels:
+        version: v1
+      matchExpressions:
+      - key: group
+        operator: In
+        values:
+          - kubernetes
+          - node
+          - watchdog
+```
+This would match any PrometheusRule with a label ```version=v1``` and a ```group``` label with any of the following values: ```[kubernetes, node, watchdog]```.  
+See the official [Kubernetes documentation](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/) on labels and selectors for more examples.  
