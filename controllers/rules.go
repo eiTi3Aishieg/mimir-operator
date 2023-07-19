@@ -33,9 +33,9 @@ type ruleElement struct {
 	RuleGroup string `json:"rulegroup"`
 }
 
-// syncRulesForAlertmanager finds all the PrometheusRules relevant for a MimirRules and sends them to Mimir
-func (r *MimirRulesReconciler) syncRulesForAlertmanager(ctx context.Context, am *domain.MimirRules) error {
-	rules, err := r.findPrometheusRulesFromLabels(ctx, am.Spec.Rules.Selectors)
+// syncRulesToRuler finds all the PrometheusRules relevant for a MimirRules and sends them to Mimir
+func (r *MimirRulesReconciler) syncRulesToRuler(ctx context.Context, auth *mimirtool.Authentication, mr *domain.MimirRules) error {
+	rules, err := r.findPrometheusRulesFromLabels(ctx, mr.Spec.Rules.Selectors)
 	if err != nil {
 		return err
 	}
@@ -46,24 +46,24 @@ func (r *MimirRulesReconciler) syncRulesForAlertmanager(ctx context.Context, am 
 		return err
 	}
 
-	// Synchronize each Rule on Mimir for the am
+	// Synchronize each Rule on Mimir Ruler
 	for ruleName, rule := range unpackedRules {
-		if err := sendRuleToMimir(ctx, am.Spec.ID, am.Spec.URL, ruleName, rule); err != nil {
+		if err := sendRuleToMimir(ctx, auth, mr.Spec.ID, mr.Spec.URL, ruleName, rule); err != nil {
 			return err
 		}
 	}
 
 	// Find the namespaces on Mimir that are NOT in our list of WANTED rules
-	// Those namespaces might have been created earlier by the operator, but the mimirrules selectors
+	// Those namespaces might have been created earlier by the operator, but the MimirRules selectors
 	// have changed since then, making those namespaces unwanted and in need of deletion.
-	namespaces, err := diffRuleNamespaces(ctx, unpackedRules, am.Spec.ID, am.Spec.URL)
+	namespaces, err := diffRuleNamespaces(ctx, unpackedRules, auth, mr.Spec.ID, mr.Spec.URL)
 	if err != nil {
 		return err
 	}
 
 	// Synchronize each of those unwanted namespace with empty rule content to trigger a deletion
 	for _, namespace := range namespaces {
-		if err := sendRuleToMimir(ctx, am.Spec.ID, am.Spec.URL, namespace, ""); err != nil {
+		if err := sendRuleToMimir(ctx, auth, mr.Spec.ID, mr.Spec.URL, namespace, ""); err != nil {
 			return err
 		}
 	}
@@ -72,9 +72,9 @@ func (r *MimirRulesReconciler) syncRulesForAlertmanager(ctx context.Context, am 
 }
 
 // deleteRulesForTenant deletes all the rules from Mimir for a specific tenant
-func (r *MimirRulesReconciler) deleteRulesForTenant(ctx context.Context, am *domain.MimirRules) error {
-	// List all the rules and namespaces for the am in JSON format
-	json, err := mimirtool.ListRules(ctx, am.Spec.ID, am.Spec.URL)
+func (r *MimirRulesReconciler) deleteRulesForTenant(ctx context.Context, auth *mimirtool.Authentication, mr *domain.MimirRules) error {
+	// List all the rules and namespaces for the MimirRules in JSON format
+	json, err := mimirtool.ListRules(ctx, auth, mr.Spec.ID, mr.Spec.URL)
 	if err != nil {
 		return err
 	}
@@ -87,7 +87,7 @@ func (r *MimirRulesReconciler) deleteRulesForTenant(ctx context.Context, am *dom
 
 	// For each rule, synchronize its namespace with empty rules to trigger a deletion
 	for _, rule := range rules {
-		if err := sendRuleToMimir(ctx, am.Spec.ID, am.Spec.URL, rule.Namespace, ""); err != nil {
+		if err := sendRuleToMimir(ctx, auth, mr.Spec.ID, mr.Spec.URL, rule.Namespace, ""); err != nil {
 			return err
 		}
 	}
@@ -96,7 +96,7 @@ func (r *MimirRulesReconciler) deleteRulesForTenant(ctx context.Context, am *dom
 }
 
 // sendRuleToMimir synchronizes a PrometheusRule with the remote Mimir
-func sendRuleToMimir(ctx context.Context, tenantId, url, ruleName, rule string) error {
+func sendRuleToMimir(ctx context.Context, auth *mimirtool.Authentication, tenantId, url, ruleName, rule string) error {
 	// Put the rule on the FS
 	fileName, err := dumpRuleToFS(tenantId, ruleName, rule)
 	if err != nil {
@@ -104,7 +104,7 @@ func sendRuleToMimir(ctx context.Context, tenantId, url, ruleName, rule string) 
 	}
 
 	// Send the rule to Mimir for synchronization
-	err = mimirtool.SynchronizeRules(ctx, ruleName, fileName, tenantId, url)
+	err = mimirtool.SynchronizeRules(ctx, auth, ruleName, fileName, tenantId, url)
 
 	// Cleanup after ourselves
 	if err := os.RemoveAll(fileName); err != nil {
@@ -185,11 +185,11 @@ func dumpRuleToFS(tenant string, ruleName, rule string) (string, error) {
 }
 
 // diffRuleNamespaces returns Rule namespaces that are currently in Mimir for the tenant but not in the ruleMap
-func diffRuleNamespaces(ctx context.Context, ruleMap map[string]string, tenant, url string) ([]string, error) {
+func diffRuleNamespaces(ctx context.Context, ruleMap map[string]string, auth *mimirtool.Authentication, tenant, url string) ([]string, error) {
 	var namespaces []string
 
 	// List all the rules and namespaces for the tenant in JSON format
-	json, err := mimirtool.ListRules(ctx, tenant, url)
+	json, err := mimirtool.ListRules(ctx, auth, tenant, url)
 	if err != nil {
 		return nil, err
 	}

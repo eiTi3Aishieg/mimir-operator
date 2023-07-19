@@ -13,9 +13,24 @@ const (
 	addressFlag   = "--address="
 	tenantFlag    = "--id="
 	namespaceFlag = "--namespaces="
+	tokenFlag     = "--auth-token"
+	userFlag      = "--user"
+	keyFlag       = "--key"
 )
 
-func callTool(ctx context.Context, args ...string) (string, string, error) {
+type Authentication struct {
+	Username string
+	Key      string
+	Token    string
+}
+
+func callTool(ctx context.Context, auth *Authentication, args ...string) (string, string, error) {
+	// Do not append the auth args to the other args BEFORE we log them as to not leak anything sensitive into the logs
+	if auth != nil {
+		authArgs := getAuthArgs(auth)
+		args = append(args, authArgs...)
+	}
+
 	log.FromContext(ctx).Info("Running CLI", "parameters", args)
 
 	cmd := exec.Command(toolName, args...)
@@ -42,7 +57,15 @@ func getDefaultSyncArgs(tenant, url, namespace string) []string {
 	return []string{addressParameter, tenantFlag + tenant, namespaceParameter}
 }
 
-func ListRules(ctx context.Context, tenant, url string) (string, error) {
+func getAuthArgs(auth *Authentication) []string {
+	if auth.Token != "" { // Token has precedence over anything else
+		return []string{tokenFlag, auth.Token}
+	} else {
+		return []string{userFlag, auth.Username, keyFlag, auth.Key}
+	}
+}
+
+func ListRules(ctx context.Context, auth *Authentication, tenant, url string) (string, error) {
 	args := []string{"rules", "list"}
 	args = append(args, getDefaultListArgs(tenant, url)...)
 	args = append(args, "--format=json")
@@ -52,14 +75,14 @@ func ListRules(ctx context.Context, tenant, url string) (string, error) {
 	var stderr string
 	var err error
 
-	if stderr, stdout, err = callTool(ctx, args...); err != nil {
+	if stderr, stdout, err = callTool(ctx, auth, args...); err != nil {
 		return "", fmt.Errorf("failed to call mimirtool cli: %s - %s", err.Error(), stderr)
 	}
 
 	return stdout, nil
 }
 
-func SynchronizeRules(ctx context.Context, ruleName, ruleFile, tenant, url string) error {
+func SynchronizeRules(ctx context.Context, auth *Authentication, ruleName, ruleFile, tenant, url string) error {
 	args := []string{"rules", "sync"}
 	args = append(args, getDefaultSyncArgs(tenant, url, ruleName)...)
 	args = append(args, ruleFile)
@@ -68,7 +91,7 @@ func SynchronizeRules(ctx context.Context, ruleName, ruleFile, tenant, url strin
 	var stderr string
 	var err error
 
-	if stderr, stdout, err = callTool(ctx, args...); err != nil {
+	if stderr, stdout, err = callTool(ctx, auth, args...); err != nil {
 		return fmt.Errorf("failed to call mimirtool cli: %s - %s", err.Error(), stderr)
 	}
 
