@@ -142,6 +142,9 @@ func (r *MimirRulesReconciler) setStatus(ctx context.Context, mr *domain.MimirRu
 	if err != nil {
 		mr.Status.Status = "Failed"
 		mr.Status.Error = err.Error()
+
+		// Also log the error in the controller for clarity
+		log.FromContext(ctx).Error(err, "Failed to reconcile MimirRules")
 	} else {
 		mr.Status.Status = "Synced"
 		mr.Status.Error = ""
