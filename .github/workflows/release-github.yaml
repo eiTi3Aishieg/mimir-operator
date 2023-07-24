@@ -24,48 +24,13 @@ jobs:
           echo "GHCR_REPO=$GHCR_REPO" >> $GITHUB_ENV
           echo "HELM_REPO=$HELM_REPO" >> $GITHUB_ENV
 
-      #- name: Publish Helm charts
-      #  run: |
-      #    cd deploy/helm
-      #    yq -i '.image.repository = "${{ env.GHCR_REPO }}"' mimir-operator/values.yaml
-      #    helm registry login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
-      #    helm package --app-version ${{ github.ref_name }} --version ${{ github.ref_name }} mimir-operator
-      #    helm push mimir-operator-${{ github.ref_name }}.tgz ${{ env.HELM_REPO }}
-
-  kustomize:
-    runs-on: ubuntu-latest
-    steps:
-      - name: install flux
-        uses: fluxcd/flux2/action@v0.41.2
-      - name: Clone repo
-        uses: actions/checkout@v3
-
-      - name: Prepare
+      - name: Publish Helm charts
         run: |
-          # OCI standard enforces lower-case paths
-          KUSTOMIZE_REPO=$(echo "oci://ghcr.io/${{ github.repository_owner }}/kustomize/mimir-operator" | tr '[:upper:]' '[:lower:]')
-          GHCR_REPO=$(echo "ghcr.io/${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-          echo "KUSTOMIZE_REPO=$KUSTOMIZE_REPO" >> $GITHUB_ENV
-          echo "GHCR_REPO=$GHCR_REPO" >> $GITHUB_ENV
-      - name: update-kustomize-image
-        run: |
-          # Install kustomize
-          make kustomize
-          # Update image to match the new image and tag
-          cd deploy/kustomize/base
-          kustomize edit set image ghcr.io/AmiditeX/mimir-operator=${{ env.GHCR_REPO }}:${{ github.ref_name }}
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v2
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Publish Kustomize OCI artifact to GHCR
-        run: |
-          flux push artifact ${{ env.KUSTOMIZE_REPO }}:${{ github.ref_name }} \
-            --path="./deploy/kustomize" \
-            --source="${{ github.event.repository.html_url }}" \
-            --revision="${GITHUB_REF_NAME}/${GITHUB_SHA}"
+          cd deploy/helm
+          yq -i '.image.repository = "${{ env.GHCR_REPO }}"' mimir-operator/values.yaml
+          helm registry login -u ${{ github.actor }} -p ${{ secrets.GITHUB_TOKEN }} ghcr.io
+          helm package --app-version ${{ github.ref_name }} --version ${{ github.ref_name }} mimir-operator
+          helm push mimir-operator-${{ github.ref_name }}.tgz ${{ env.HELM_REPO }}
 
   build-and-push-image:
     runs-on: ubuntu-latest

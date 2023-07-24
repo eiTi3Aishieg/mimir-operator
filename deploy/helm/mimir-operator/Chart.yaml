@@ -1,0 +1,7 @@
+apiVersion: v2
+name: mimir-operator
+description: Helm Chart to deploy the Mimir Operator
+type: application
+
+version: 0.1.0
+appVersion: "v0.1.2"

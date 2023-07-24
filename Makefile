@@ -85,6 +85,7 @@ help: ## Display this help.
 .PHONY: manifests
 manifests: controller-gen ## Generate WebhookConfiguration, ClusterRole and CustomResourceDefinition objects.
 	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=config/crd/bases
+	$(CONTROLLER_GEN) rbac:roleName=manager-role crd webhook paths="./..." output:crd:artifacts:config=deploy/helm/mimir-operator/crds
 
 .PHONY: generate
 generate: controller-gen ## Generate code containing DeepCopy, DeepCopyInto, and DeepCopyObject method implementations.
@@ -97,6 +98,22 @@ fmt: ## Run go fmt against code.
 .PHONY: vet
 vet: ## Run go vet against code.
 	go vet ./...
+
+.PHONY: helm-docs
+helm-docs: ## Install the Helm Docs utility
+ifeq (, $(shell which helm-docs))
+	@{ \
+	set -e ;\
+	go install github.com/norwoodj/helm-docs/cmd/helm-docs@v1.11.0 ;\
+	}
+HELM_DOCS=$(GOBIN)/helm-docs
+else
+HELM_DOCS=$(shell which helm-docs)
+endif
+
+.PHONY: helm/docs
+helm/docs: helm-docs ## Generate the Helm documentation
+	$(HELM_DOCS)
 
 .PHONY: test
 test: manifests generate fmt vet envtest ## Run tests.
