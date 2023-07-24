@@ -75,6 +75,17 @@ UnDeploy the controller from the cluster:
 make undeploy
 ```
 
+## Releasing a new version
+
+- Update the documentation in ```docs/``` (check the instructions for installation and set the upcoming release as the latest release)
+- Run ```make generate``` and ```make manifests``` to refresh the CRDs and the deployment files in ```config/``` (the CRDs are copied to the Helm chart)
+- Bump the chart version in ```deploy/helm/mimir-operator/Chart.yml``` with the version of the upcoming release
+- Check if ```config/rbac/role.yaml``` has changed. If it did, edit the RBAC config in the Helm Chart (```deploy/helm/mimir-operator/templates/rbac.yaml```) to reflect the changes
+- Change the version of the project in ```Makefile``` to the upcoming release
+- Run ```git checkout -b [RELEASE]```
+- Push the new branch to the Git
+- Merge and create a Release on Github
+
 ## License
 
 Copyright 2023.
