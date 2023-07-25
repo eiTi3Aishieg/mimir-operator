@@ -79,8 +79,8 @@ make undeploy
 
 - Update the documentation in ```docs/``` (check the instructions for installation and set the upcoming release as the latest release)
 - Run ```make generate``` and ```make manifests``` to refresh the CRDs and the deployment files in ```config/``` (the CRDs are copied to the Helm chart)
-- Run ```make helm/docs``` to regenerate the Helm README with any new documentation of the values
 - Bump the chart version in ```deploy/helm/mimir-operator/Chart.yml``` with the version of the upcoming release
+- Run ```make helm/docs``` to regenerate the Helm README with any new documentation of the values
 - Check if ```config/rbac/role.yaml``` has changed. If it did, edit the RBAC config in the Helm Chart (```deploy/helm/mimir-operator/templates/rbac.yaml```) to reflect the changes
 - Change the version of the project in ```Makefile``` to the upcoming release
 - Run ```git checkout -b [RELEASE]```
