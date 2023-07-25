@@ -46,7 +46,7 @@ func (r *MimirRulesReconciler) syncRulesToRuler(ctx context.Context, auth *mimir
 		return err
 	}
 
-	// Synchronize each Rule on Mimir Ruler
+	// Synchronize each Rule on the Mimir Ruler
 	for ruleName, rule := range unpackedRules {
 		if err := sendRuleToMimir(ctx, auth, mr.Spec.ID, mr.Spec.URL, ruleName, rule); err != nil {
 			return err
@@ -117,24 +117,50 @@ func sendRuleToMimir(ctx context.Context, auth *mimirtool.Authentication, tenant
 }
 
 // findPrometheusRulesFromLabels lists all the CRs of type "PrometheusRules" based on label selectors
-func (r *MimirRulesReconciler) findPrometheusRulesFromLabels(ctx context.Context, selector *metav1.LabelSelector) (*prometheus.PrometheusRuleList, error) {
-	sel, err := metav1.LabelSelectorAsSelector(selector)
-	if err != nil {
-		return nil, err
+func (r *MimirRulesReconciler) findPrometheusRulesFromLabels(ctx context.Context, selector []*metav1.LabelSelector) (*prometheus.PrometheusRuleList, error) {
+	prometheusRuleList := &prometheus.PrometheusRuleList{}
+
+	for _, labelSelector := range selector {
+		sel, err := metav1.LabelSelectorAsSelector(labelSelector)
+		if err != nil {
+			return nil, err
+		}
+
+		listOptions := client.ListOptions{
+			LabelSelector: sel,
+			Namespace:     "",
+		}
+
+		promRules := &prometheus.PrometheusRuleList{}
+		if err := r.Client.List(ctx, promRules, &listOptions); err != nil {
+			return nil, err
+		}
+
+		concatenatePrometheusRuleList(prometheusRuleList, promRules)
 	}
 
-	listOptions := client.ListOptions{
-		LabelSelector: sel,
-		Namespace:     "",
+	return prometheusRuleList, nil
+}
+
+// concatenatePrometheusRuleList concatenates every rule present in the src parameter into the dest and removes
+// any possible duplicate in the process so that all the items added in dest are unique
+func concatenatePrometheusRuleList(dest *prometheus.PrometheusRuleList, src *prometheus.PrometheusRuleList) {
+	for _, promRule := range src.Items {
+		if !isRuleInSlice(dest.Items, promRule) { // Remove duplicates
+			dest.Items = append(dest.Items, promRule)
+		}
+	}
+}
+
+// isRuleInSlice returns true if a rule is contained in the slice passed in the first parameter
+func isRuleInSlice(rules []*prometheus.PrometheusRule, rule *prometheus.PrometheusRule) bool {
+	for _, r := range rules {
+		if r.Namespace == rule.Namespace && r.Name == rule.Name {
+			return true
+		}
 	}
 
-	prometheusRulesList := &prometheus.PrometheusRuleList{}
-
-	if err := r.Client.List(ctx, prometheusRulesList, &listOptions); err != nil {
-		return nil, err
-	}
-
-	return prometheusRulesList, nil
+	return false
 }
 
 // unpackRules reads a PrometheusRule CRD and keeps only the Groups embedded inside it

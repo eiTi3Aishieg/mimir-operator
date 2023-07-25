@@ -13,5 +13,5 @@ spec:
   url: "http://10.233.50.128"
   rules:
     selectors:
-      matchLabels:
-        helm.sh/chart: loki-4.10.0
+      - matchLabels:
+          helm.sh/chart: loki-4.10.0

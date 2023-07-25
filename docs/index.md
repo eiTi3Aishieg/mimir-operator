@@ -67,11 +67,12 @@ spec:
   # The rules must be defined on the Kubernetes Cluster using "PrometheusRules" from the PrometheusOperator (https://github.com/prometheus-operator/prometheus-operator)
   # Any PrometheusRule that matches the selectors will be installed for the tenant in Mimir
   # Selectors can be of type "matchelLabels", "matchExpressions" or both (requirements are ANDed).
+  # Multiple selector blocks can be specified. The PrometheusRules filtered using each selector block are concatenated.
   # See the K8S documentation on selectors for more information (https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/).
   rules:
     selectors:
-      matchLabels:
-        helm.sh/chart: loki-4.10.1 # Install PrometheusRules from the Loki chart
+      - matchLabels:
+          helm.sh/chart: loki-4.10.1 # Install PrometheusRules from the Loki chart
 ```
 
 ### Installing Prometheus Rules for a Tenant
@@ -118,9 +119,9 @@ spec:
   url: "http://mimir.instance.com"
   rules:
     selectors:
-      matchLabels:
-        alert-type: loki
-        alert-level: "0"
+      - matchLabels:
+          alert-type: loki
+          alert-level: "0"
 ```
 
 To select all the rules available on the cluster:
@@ -133,15 +134,18 @@ More complex selections can be done by combining selectors:
 ```yaml
   rules:
     selectors:
-      matchLabels:
-        version: v1
-      matchExpressions:
-      - key: group
-        operator: In
-        values:
-          - kubernetes
-          - node
-          - watchdog
+      - matchLabels:
+          version: v1
+        matchExpressions:
+        - key: group
+          operator: In
+          values:
+            - kubernetes
+            - node
+            - watchdog
+      - matchLabels:
+          version: v3
 ```
-This would match any PrometheusRule with a label ```version=v1``` and a ```group``` label with any of the following values: ```[kubernetes, node, watchdog]```.  
+This would match any PrometheusRule with a label ```version=v1``` and a ```group``` label with any of the following values: ```[kubernetes, node, watchdog]```
+and any PrometheusRule with a label ```version=v3```.
 See the official [Kubernetes documentation](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/) on labels and selectors for more examples.  
