@@ -140,8 +140,14 @@ func (in *Rules) DeepCopyInto(out *Rules) {
 	*out = *in
 	if in.Selectors != nil {
 		in, out := &in.Selectors, &out.Selectors
-		*out = new(v1.LabelSelector)
-		(*in).DeepCopyInto(*out)
+		*out = make([]*v1.LabelSelector, len(*in))
+		for i := range *in {
+			if (*in)[i] != nil {
+				in, out := &(*in)[i], &(*out)[i]
+				*out = new(v1.LabelSelector)
+				(*in).DeepCopyInto(*out)
+			}
+		}
 	}
 }
 

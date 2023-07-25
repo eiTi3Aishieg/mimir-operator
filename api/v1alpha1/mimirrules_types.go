@@ -24,7 +24,7 @@ type MimirRulesSpec struct {
 // The rules must be defined in CRDs of type "PrometheusRule" and this resource should
 // only be used to target those PrometheusRules by referencing them through selectors
 type Rules struct {
-	Selectors *metav1.LabelSelector `json:"selectors"`
+	Selectors []*metav1.LabelSelector `json:"selectors"`
 }
 
 // Auth contains configuration to set up authentication on the remote Mimir Ruler endpoint
