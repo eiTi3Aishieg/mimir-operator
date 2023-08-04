@@ -43,16 +43,6 @@ func (r *MimirRulesReconciler) syncRulesToRuler(ctx context.Context, auth *mimir
 	// Apply overrides on the PrometheusRules using the properties defined inside the MimirRules
 	applyOverrides(mr.Spec.Overrides, rules)
 
-	for _, item := range rules.Items {
-		for _, group := range item.Spec.Groups {
-			for _, rule := range group.Rules {
-				if rule.Alert == "NoMetricsFromTenant" {
-					fmt.Printf("-- %s\n", rule.For)
-				}
-			}
-		}
-	}
-
 	// Convert the PrometheusRules to a format Mimir understands
 	unpackedRules, err := r.unpackRules(rules)
 	if err != nil {
