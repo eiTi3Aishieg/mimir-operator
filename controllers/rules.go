@@ -40,6 +40,9 @@ func (r *MimirRulesReconciler) syncRulesToRuler(ctx context.Context, auth *mimir
 		return err
 	}
 
+	// Apply overrides on the PrometheusRules using the properties defined inside the MimirRules
+	applyOverrides(mr.Spec.Overrides, rules)
+
 	// Convert the PrometheusRules to a format Mimir understands
 	unpackedRules, err := r.unpackRules(rules)
 	if err != nil {
@@ -161,6 +164,85 @@ func isRuleInSlice(rules []*prometheus.PrometheusRule, rule *prometheus.Promethe
 	}
 
 	return false
+}
+
+// removeRule removes one rule from a list of Prometheus Rules
+func removeRule(s []prometheus.Rule, index int) []prometheus.Rule {
+	s[index] = s[len(s)-1]
+	return s[:len(s)-1]
+}
+
+// removeGroup removes one group from a list of Prometheus RuleGroups
+func removeGroup(s []prometheus.RuleGroup, index int) []prometheus.RuleGroup {
+	s[index] = s[len(s)-1]
+	return s[:len(s)-1]
+}
+
+// applyOverrides applies overrides defined in a MimirRule to the properties of rules contained
+// inside a list of PrometheusRules. This allows for fine-tuning of imported bulks such as
+// rules from a catalog. Rules can be overridden to change a field such as the alert query or
+// the amount of time necessary for the query to be true before it fires an alert.
+// This is especially useful to set custom alerting conditions on particular tenants when
+// they behave differently from most other tenants.
+func applyOverrides(overrides map[string]domain.Override, list *prometheus.PrometheusRuleList) {
+	if len(overrides) == 0 {
+		return
+	}
+
+	for _, item := range list.Items {
+		for g, group := range item.Spec.Groups {
+			for r, rule := range group.Rules {
+				// The content of a "rule" in PrometheusRules can be either:
+				// - an Alert rule that triggers on specific conditions
+				// - a Recording rule that records metrics to be analyzed by Rules
+				// The type of rule is based on which of the two "Alert" and "Record" in non-null
+				var ruleName string
+				if rule.Alert != "" {
+					ruleName = rule.Alert
+				} else {
+					ruleName = rule.Record
+				}
+
+				// Search if there's an override available for the name of that rule
+				override, ok := overrides[ruleName]
+				if !ok {
+					continue
+				}
+
+				// Override specifies this rule should not exist, remove it entirely from the list
+				if override.Disable {
+					item.Spec.Groups[g].Rules = removeRule(item.Spec.Groups[g].Rules, r)
+
+					// We may have deleted the last/only Rule inside the RuleGroup, if that is the case, the group
+					// is now completely empty, which is invalid to the eyes of Mimir, so we just remove it.
+					if len(item.Spec.Groups[g].Rules) == 0 {
+						item.Spec.Groups = removeGroup(item.Spec.Groups, g)
+					}
+
+					continue
+				}
+
+				// Apply the override for any of the fields in the Rule if we have any specified
+				if override.Annotations != nil {
+					rule.Annotations = override.Annotations
+				}
+
+				if override.Labels != nil {
+					rule.Labels = override.Labels
+				}
+
+				if override.Expr != "" {
+					rule.Expr.StrVal = override.Expr
+				}
+
+				if override.For != "" {
+					rule.For = prometheus.Duration(override.For)
+				}
+
+				item.Spec.Groups[g].Rules[r] = rule // We modified a copy of the rule, put it back in the *Rule
+			}
+		}
+	}
 }
 
 // unpackRules reads a PrometheusRule CRD and keeps only the Groups embedded inside it

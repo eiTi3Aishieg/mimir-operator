@@ -73,8 +73,33 @@ spec:
               id:
                 description: ID is the identifier of the tenant in the Mimir Ruler
                 type: string
+              overrides:
+                additionalProperties:
+                  description: Override is a structure containing parameters that
+                    can be overridden inside a PrometheusRule. This is useful to override
+                    certain alerts within certain alert groups with fine-tuned properties
+                    such as the query used to fire the alert. This structure can also
+                    be used to specify the rule should be outright disabled.
+                  properties:
+                    annotations:
+                      additionalProperties:
+                        type: string
+                      type: object
+                    disable:
+                      type: boolean
+                    expr:
+                      type: string
+                    for:
+                      type: string
+                    labels:
+                      additionalProperties:
+                        type: string
+                      type: object
+                  type: object
+                description: Overrides applied to specific rules in this tenant
+                type: object
               rules:
-                description: Rules that should be linked to the tenant ID in the Mimir
+                description: Rules that should be added to the tenant in the Mimir
                   Ruler
                 properties:
                   selectors:

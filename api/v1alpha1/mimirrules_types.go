@@ -16,8 +16,11 @@ type MimirRulesSpec struct {
 	// Authentication configuration if it is required by the remote endpoint
 	Auth *Auth `json:"auth,omitempty"`
 
-	// Rules that should be linked to the tenant ID in the Mimir Ruler
+	// Rules that should be added to the tenant in the Mimir Ruler
 	Rules *Rules `json:"rules"`
+
+	// Overrides applied to specific rules in this tenant
+	Overrides map[string]Override `json:"overrides,omitempty"`
 }
 
 // Rules that are associated to a tenant and that should be synchronized to the Mimir Ruler
@@ -25,6 +28,18 @@ type MimirRulesSpec struct {
 // only be used to target those PrometheusRules by referencing them through selectors
 type Rules struct {
 	Selectors []*metav1.LabelSelector `json:"selectors"`
+}
+
+// Override is a structure containing parameters that can be overridden inside
+// a PrometheusRule. This is useful to override certain alerts within certain
+// alert groups with fine-tuned properties such as the query used to fire the alert.
+// This structure can also be used to specify the rule should be outright disabled.
+type Override struct {
+	Disable     bool              `json:"disable,omitempty"`
+	Annotations map[string]string `json:"annotations,omitempty"`
+	Labels      map[string]string `json:"labels,omitempty"`
+	Expr        string            `json:"expr,omitempty"`
+	For         string            `json:"for,omitempty"`
 }
 
 // Auth contains configuration to set up authentication on the remote Mimir Ruler endpoint

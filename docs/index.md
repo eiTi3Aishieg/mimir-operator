@@ -149,3 +149,48 @@ More complex selections can be done by combining selectors:
 This would match any PrometheusRule with a label ```version=v1``` and a ```group``` label with any of the following values: ```[kubernetes, node, watchdog]```
 and any PrometheusRule with a label ```version=v3```.
 See the official [Kubernetes documentation](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/) on labels and selectors for more examples.  
+
+### Overriding/disabling rules for a Tenant
+If you're actively monitoring a lot of tenants, you might make "rulebooks" using multiple PrometheusRules containing rules that should be applied to all your tenants.  
+Those rules would constitute a *catalog* of rules that you can apply (or not) to your tenants based on their nature (VMs, Kubernetes clusters, Network equipment...)  
+This standardization of rules is good in practice to limit the unchecked growth of the amount of PrometheusRules deployed.  
+But sometimes, it might occur that a specific tenant should have one of the rules contained inside those *rulesbooks* overriden.
+This may mean changing the query used to trigger the alert, change the "for" directive used to wait before firing, or change labels such as the severity.  
+You can't change that rule in the common rulebook, or it would change it for every tenant on which that rule is applied.  
+One of the solution would be to copy the PrometheusRule containing that rule, modify the rule and redeploy the PrometheusRule with different labelSelectors.  
+This just doesn't scale with dozens of tenants monitored.
+To make it easier, the **Mimir Operator** provides a way to override specific Rules for a tenant:
+
+```yaml
+apiVersion: mimir.randgen.xyz/v1alpha1
+kind: MimirRules
+metadata:
+  name: mimirrules-sample
+  namespace: default
+spec:
+  id: "loki-tenant"
+  url: "http://mimir.instance.com"
+  rules:
+    selectors:
+      - matchLabels:
+          version: v1
+        matchExpressions:
+          - key: group
+            operator: In
+            values:
+              - kubernetes
+              - node
+              - watchdog
+  overrides:
+    NoMetricsFromTenant: # Name of the rule we wish to override
+      disable: true      # Disable the rule completely
+      expr: "1" # Change the query evaluated to trigger the Alert
+      labels:
+        severity: info # Change labels, such as the severity, for this specific rule
+        newLabel: "example"
+      annotations:
+        newAnnotation: "example value"
+      for: "10m" # Change the "for" directive of the rule
+```
+
+The operator will only override properties that are specified. For example, if specifying an override for the "expr" property, but not the "labels" property, the rule will be deployed on Mimir with the overriden "expr" but will keep the labels inherited from the PrometheusRule.
