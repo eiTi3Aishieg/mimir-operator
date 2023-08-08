@@ -9,7 +9,7 @@ The Mimir Operator is a Kubernetes operator to control Mimir tenants using CRDs.
 The Helm Chart is published in the OCI format on GitHub.
 
 ```
-helm install -i mimir-operator oci://ghcr.io/AmiditeX/helm-charts/mimir-operator --version v0.1.2
+helm install -i mimir-operator oci://ghcr.io/AmiditeX/helm-charts/mimir-operator --version v0.1.5
 ```
 
 Helm is the easiest way to install the operator. The manifests for the Helm Chart can be found in ```deploy/helm/mimir-operator```.  
