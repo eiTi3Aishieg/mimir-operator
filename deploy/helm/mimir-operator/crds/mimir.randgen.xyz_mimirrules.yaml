@@ -70,6 +70,12 @@ spec:
                   user:
                     type: string
                 type: object
+              externalLabels:
+                additionalProperties:
+                  type: string
+                description: ExternalLabels added to the alerts automatically when
+                  they are fired
+                type: object
               id:
                 description: ID is the identifier of the tenant in the Mimir Ruler
                 type: string

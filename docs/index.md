@@ -9,7 +9,7 @@ The Mimir Operator is a Kubernetes operator to control Mimir tenants using CRDs.
 The Helm Chart is published in the OCI format on GitHub.
 
 ```
-helm install -i mimir-operator oci://ghcr.io/AmiditeX/helm-charts/mimir-operator --version v0.1.5
+helm install -i mimir-operator oci://ghcr.io/AmiditeX/helm-charts/mimir-operator --version v0.1.6
 ```
 
 Helm is the easiest way to install the operator. The manifests for the Helm Chart can be found in ```deploy/helm/mimir-operator```.  
@@ -168,7 +168,7 @@ metadata:
   name: mimirrules-sample
   namespace: default
 spec:
-  id: "loki-tenant"
+  id: "tenant"
   url: "http://mimir.instance.com"
   rules:
     selectors:
@@ -194,3 +194,36 @@ spec:
 ```
 
 The operator will only override properties that are specified. For example, if specifying an override for the "expr" property, but not the "labels" property, the rule will be deployed on Mimir with the overriden "expr" but will keep the labels inherited from the PrometheusRule.
+
+## Adding external labels
+
+It is possible to add labels to every rule installed in Mimir by a MimirRule using ```externalLabels```   
+For example, it can be useful to add a label indicating what tenant is emitting the alert.  
+The syntax to add labels is the following:
+```yaml
+apiVersion: mimir.randgen.xyz/v1alpha1
+kind: MimirRules
+metadata:
+  name: mimirrules-sample
+  namespace: default
+spec:
+  id: "tenant"
+  url: "http://mimir.instance.com"
+  rules:
+    selectors:
+      - matchLabels:
+          version: v1
+        matchExpressions:
+          - key: group
+            operator: In
+            values:
+              - kubernetes
+              - node
+              - watchdog
+  externalLabels:
+    myLabel: myValue
+    tenant: myTenant
+```
+
+The Rules installed in the Ruler by the operator will all have those labels appended to their list of labels.  
+This effectively has the same effect as overriding each individual alert to add a new label.

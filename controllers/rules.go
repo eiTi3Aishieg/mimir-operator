@@ -43,6 +43,9 @@ func (r *MimirRulesReconciler) syncRulesToRuler(ctx context.Context, auth *mimir
 	// Apply overrides on the PrometheusRules using the properties defined inside the MimirRules
 	applyOverrides(mr.Spec.Overrides, rules)
 
+	// Add external labels to the PrometheusRules
+	applyExternalLabels(mr.Spec.ExternalLabels, rules)
+
 	// Convert the PrometheusRules to a format Mimir understands
 	unpackedRules, err := r.unpackRules(rules)
 	if err != nil {
@@ -329,4 +332,29 @@ func convertJsonToRules(data string) ([]ruleElement, error) {
 	}
 
 	return elems, nil
+}
+
+// applyExternalLabels adds a list of labels to every PrometheusRule in a list
+func applyExternalLabels(labels map[string]string, list *prometheus.PrometheusRuleList) {
+	if len(labels) == 0 {
+		return
+	}
+
+	for _, item := range list.Items {
+		for g, group := range item.Spec.Groups {
+			for r, rule := range group.Rules {
+				// No labels on the rule, create the map, so we can insert ours
+				if rule.Labels == nil {
+					rule.Labels = map[string]string{}
+				}
+
+				// Insert our label
+				for key, value := range labels {
+					rule.Labels[key] = value
+				}
+
+				item.Spec.Groups[g].Rules[r] = rule // We modified a copy of the rule, put it back in the *Rule
+			}
+		}
+	}
 }

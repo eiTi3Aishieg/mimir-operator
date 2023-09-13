@@ -21,6 +21,9 @@ type MimirRulesSpec struct {
 
 	// Overrides applied to specific rules in this tenant
 	Overrides map[string]Override `json:"overrides,omitempty"`
+
+	// ExternalLabels added to the alerts automatically when they are fired
+	ExternalLabels map[string]string `json:"externalLabels,omitempty"`
 }
 
 // Rules that are associated to a tenant and that should be synchronized to the Mimir Ruler
