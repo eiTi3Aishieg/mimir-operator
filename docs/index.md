@@ -81,7 +81,7 @@ spec:
 
 In the Mimir Ruler, alerts are grouped in "groups", which are themselves grouped in "namespaces". The name of a namespace is computed by taking the Kubernetes namespace of the PrometheusRule that was used to generate the Mimir rule, and appending the name of the Kubernetes PrometheusRule.
 
-In the following example, the **loki-alerts** PrometheusRule will be installed in the Mimir tenant under the namespace *alerts-loki-alerts", with one group named "loki_alerts".
+In the following example, the **loki-alerts** PrometheusRule will be installed in the Mimir tenant under the namespace *alerts-loki-alerts*, with one group named "loki_alerts".
 
 This example shows how to install a PrometheusRule to monitor Loki:
 ```yaml
