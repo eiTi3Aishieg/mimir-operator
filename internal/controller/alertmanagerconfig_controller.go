@@ -8,7 +8,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	mimirrandgenxyzv1alpha1 "mimir-operator/api/v1alpha1"
+	domain "mimir-operator/api/v1alpha1"
 )
 
 // AlertManagerConfigReconciler reconciles a AlertManagerConfig object
@@ -41,6 +41,6 @@ func (r *AlertManagerConfigReconciler) Reconcile(ctx context.Context, req ctrl.R
 // SetupWithManager sets up the controller with the Manager.
 func (r *AlertManagerConfigReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&mimirrandgenxyzv1alpha1.AlertManagerConfig{}).
+		For(&domain.AlertManagerConfig{}).
 		Complete(r)
 }

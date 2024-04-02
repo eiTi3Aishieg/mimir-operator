@@ -12,7 +12,7 @@ require (
 	sigs.k8s.io/controller-runtime v0.17.2
 )
 
-require gopkg.in/yaml.v2 v2.4.0 // indirect
+require gopkg.in/yaml.v2 v2.4.0
 
 require (
 	github.com/beorn7/perks v1.0.1 // indirect
