@@ -9,21 +9,35 @@ import (
 
 // AlertManagerConfigSpec defines the desired state of AlertManagerConfig
 type AlertManagerConfigSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// ID is the identifier of the tenant in the Mimir Ruler
+	ID string `json:"id"`
 
-	// Foo is an example field of AlertManagerConfig. Edit alertmanagerconfig_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// URL is the URL of the remote Mimir Ruler
+	URL string `json:"url"`
+
+	// Authentication configuration if it is required by the remote endpoint
+	Auth *Auth `json:"auth,omitempty"`
+
+	// Config that should be added to the tenant in the Mimir Alert Manager
+	Config *Config `json:"config"`
+}
+
+type Config struct {
+	Selectors []*metav1.LabelSelector `json:"selectors"`
 }
 
 // AlertManagerConfigStatus defines the observed state of AlertManagerConfig
 type AlertManagerConfigStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	// Status describes whether the rules are synchronized
+	Status string `json:"status,omitempty"`
+
+	// Error describes the last synchronization error
+	Error string `json:"error,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+kubebuilder:printcolumn:name="Status",type=string,JSONPath=`.status.status`
 
 // AlertManagerConfig is the Schema for the alertmanagerconfigs API
 type AlertManagerConfig struct {
