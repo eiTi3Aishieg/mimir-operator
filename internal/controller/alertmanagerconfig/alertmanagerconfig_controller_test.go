@@ -1,4 +1,4 @@
-package controller
+package alertmanagerconfig
 
 import (
 	"context"
@@ -7,12 +7,15 @@ import (
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	mimirrandgenxyzv1alpha1 "mimir-operator/api/v1alpha1"
+	domain "mimir-operator/api/v1alpha1"
 )
+
+var k8sClient client.Client
 
 var _ = Describe("AlertManagerConfig Controller", func() {
 	Context("When reconciling a resource", func() {
@@ -24,13 +27,13 @@ var _ = Describe("AlertManagerConfig Controller", func() {
 			Name:      resourceName,
 			Namespace: "default", // TODO(user):Modify as needed
 		}
-		alertmanagerconfig := &mimirrandgenxyzv1alpha1.AlertManagerConfig{}
+		alertmanagerconfig := &domain.AlertManagerConfig{}
 
 		BeforeEach(func() {
 			By("creating the custom resource for the Kind AlertManagerConfig")
 			err := k8sClient.Get(ctx, typeNamespacedName, alertmanagerconfig)
 			if err != nil && errors.IsNotFound(err) {
-				resource := &mimirrandgenxyzv1alpha1.AlertManagerConfig{
+				resource := &domain.AlertManagerConfig{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      resourceName,
 						Namespace: "default",
@@ -43,7 +46,7 @@ var _ = Describe("AlertManagerConfig Controller", func() {
 
 		AfterEach(func() {
 			// TODO(user): Cleanup logic after each test, like removing the resource instance.
-			resource := &mimirrandgenxyzv1alpha1.AlertManagerConfig{}
+			resource := &domain.AlertManagerConfig{}
 			err := k8sClient.Get(ctx, typeNamespacedName, resource)
 			Expect(err).NotTo(HaveOccurred())
 

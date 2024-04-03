@@ -1,4 +1,4 @@
-package controller
+package mimirrules
 
 import (
 	"context"
@@ -116,7 +116,7 @@ func (r *MimirRulesReconciler) reconcileRules(ctx context.Context, mr *domain.Mi
 // reconcileOnPrometheusRuleChange sends a reconcile request to EVERY MimirRule on the cluster
 // This is done to retrigger the synchronization of MimirRules if new PrometheusRules have been added
 // or if some PrometheusRules have changed their definition
-func (r *MimirRulesReconciler) reconcileOnPrometheusRuleChange(rule client.Object) []reconcile.Request {
+func (r *MimirRulesReconciler) reconcileOnPrometheusRuleChange(ctx context.Context, rule client.Object) []reconcile.Request {
 	allMimirRules := &domain.MimirRulesList{}
 	err := r.List(context.Background(), allMimirRules)
 	if err != nil {
