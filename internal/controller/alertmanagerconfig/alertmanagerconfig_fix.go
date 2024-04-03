@@ -61,6 +61,15 @@ func sendAMConfigToMimir(ctx context.Context, auth *mimirtool.Authentication, te
 		return err
 	}
 
+	// Cleanup after ourselves
+	defer func() {
+		if err := os.RemoveAll(fileName); err != nil {
+			log.FromContext(ctx).
+				WithValues("alertmanagerconfig", tenantId).
+				Error(err, "failed to cleanup fs after loading alert manager configuration to mimir")
+		}
+	}()
+
 	// Verify alert manager configuration before loading it
 	err = mimirtool.VerifyAlertManagerConfig(ctx, auth, fileName)
 
@@ -68,17 +77,9 @@ func sendAMConfigToMimir(ctx context.Context, auth *mimirtool.Authentication, te
 		log.FromContext(ctx).
 			WithValues("alertmanagerconfig", tenantId).
 			Error(err, "failed to validate configuration")
-
-	} else {
-		err = mimirtool.LoadAlertManagerConfig(ctx, auth, fileName, tenantId, url)
+		return err
 	}
-
-	// Cleanup after ourselves
-	if err := os.RemoveAll(fileName); err != nil {
-		log.FromContext(ctx).
-			WithValues("alertmanagerconfig", tenantId).
-			Error(err, "failed to cleanup fs after loading alert manager configuration to mimir")
-	}
+	err = mimirtool.LoadAlertManagerConfig(ctx, auth, fileName, tenantId, url)
 
 	return err
 }
