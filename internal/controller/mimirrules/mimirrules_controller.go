@@ -14,7 +14,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	domain "mimir-operator/api/v1alpha1"
 )
@@ -160,7 +159,7 @@ func (r *MimirRulesReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&domain.MimirRules{}).
 		Watches( // Setup WATCH on PrometheusRules to dynamically reload MimirRules into the MimirRuler if a selected rule has been changed
-			&source.Kind{Type: &prometheus.PrometheusRule{}},
+			&prometheus.PrometheusRule{},
 			handler.EnqueueRequestsFromMapFunc(r.reconcileOnPrometheusRuleChange)).
 		Complete(r)
 }

@@ -240,7 +240,8 @@ func applyOverrides(overrides map[string]domain.Override, list *prometheus.Prome
 				}
 
 				if override.For != "" {
-					rule.For = prometheus.Duration(override.For)
+					d := prometheus.Duration(override.For)
+					rule.For = &d
 				}
 
 				item.Spec.Groups[g].Rules[r] = rule // We modified a copy of the rule, put it back in the *Rule
