@@ -32,10 +32,6 @@ type AlertManagerConfigReconciler struct {
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
-// the AlertManagerConfig object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.17.0/pkg/reconcile
@@ -77,12 +73,12 @@ func (r *AlertManagerConfigReconciler) Reconcile(ctx context.Context, req ctrl.R
 	return ctrl.Result{}, r.handleCreationAndChanges(ctx, amc)
 }
 
-// handleCreationAndChanges handles reconciliation of MimirRules for events that are not a deletion
-// This means that this function will be called for any modification in a MimirRules or for
-// any creation of a new MimirRules in the API. It is also called periodically for scheduled
+// handleCreationAndChanges handles reconciliation of Alert Manager Config for events that are not a deletion
+// This means that this function will be called for any modification in an Alert Manager Config or for
+// any creation of a new Alert Manager Config in the API. It is also called periodically for scheduled
 // reconciliation and at the startup of the controller.
 func (r *AlertManagerConfigReconciler) handleCreationAndChanges(ctx context.Context, amc *domain.AlertManagerConfig) error {
-	reconciliationError := r.reconcileRules(ctx, amc)
+	reconciliationError := r.reconcileAMConfig(ctx, amc)
 	if err := r.setStatus(ctx, amc, reconciliationError); err != nil {
 		return err
 	}
@@ -102,17 +98,21 @@ func (r *AlertManagerConfigReconciler) handleDeletion(ctx context.Context, amc *
 	return r.deleteAlertManagerConfigForTenant(ctx, auth, amc)
 }
 
-// reconcileRules ensures Mimir is synced with the PrometheusRules associated with a MimirRules
-func (r *AlertManagerConfigReconciler) reconcileRules(ctx context.Context, amc *domain.AlertManagerConfig) error {
-	log.FromContext(ctx).Info("Running reconciliation of the rules")
+// reconcileAMConfig ensures Mimir correctly load the alert manager config
+func (r *AlertManagerConfigReconciler) reconcileAMConfig(ctx context.Context, amc *domain.AlertManagerConfig) error {
+	log.FromContext(ctx).Info("Running reconciliation of the Alert Manager Config")
 
 	auth, err := utils.ExtractAuth(ctx, r.Client, amc.Spec.Auth, amc.ObjectMeta.Namespace)
 	if err != nil {
 		return fmt.Errorf("failed to extract authentication settings: %w", err)
 	}
 
-	// TODO: config := r.unpack(amc)
-	config := "convert config to string"
+	config, err := r.configToString(amc)
+
+	if err != nil {
+		return fmt.Errorf("failed to convert configuration to string: %w", err)
+	}
+
 	return sendAMConfigToMimir(ctx, auth, amc.Spec.ID, amc.Spec.URL, config)
 }
 

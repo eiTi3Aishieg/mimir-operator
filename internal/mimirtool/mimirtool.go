@@ -113,13 +113,8 @@ func VerifyAlertManagerConfig(ctx context.Context, auth *Authentication, configF
 
 	// verify return error in stderr
 	if stderr, _, err = callTool(ctx, auth, args...); err != nil {
+		log.FromContext(ctx).Info("CLI returned", "message", stderr)
 		return fmt.Errorf("failed to call mimirtool cli: %s - %s", err.Error(), stderr)
-	}
-
-	log.FromContext(ctx).Info("CLI returned", "message", stderr)
-
-	if stderr != "" {
-		return fmt.Errorf("verification of config failed: \n%s", stderr)
 	}
 	return nil
 }

@@ -6,6 +6,7 @@ import (
 	"mimir-operator/internal/mimirtool"
 	"os"
 
+	"gopkg.in/yaml.v2"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -19,42 +20,23 @@ func (r *AlertManagerConfigReconciler) deleteAlertManagerConfigForTenant(ctx con
 	return nil
 }
 
-// unpackRules reads a PrometheusRule CRD and keeps only the Groups embedded inside it
-// The other fields are irrelevant to Mimir as the API only consumes files following
-// the standard Prometheus Alerting Rules format
-// func (r *AlertManagerConfigReconciler) unpackRules(config *domain.AlertManagerConfig) (map[string]string, error) {
+// configToString reads an AlertManagerConfig CRD keeps only the Config Spec
+// The other fields are irrelevant to Mimir as we only need to apply the config part for the alert manager
+func (r *AlertManagerConfigReconciler) configToString(config *domain.AlertManagerConfig) (string, error) {
+	// Re-marshal to keep only the ".groups" out of the ".spec"
+	result, err := yaml.Marshal(config.Spec.Config)
+	if err != nil {
+		return "", err
+	}
 
-// 	codec := serializer.NewCodecFactory(r.Scheme).
-// 	results := make(map[string]string)
+	return string(result), nil
+}
 
-// 	// Encode the Rule to JSON in the "kubectl" format to remove runtime fields
-// 	output, err := runtime.Encode(codec, rule)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	var filter specFilter
-
-// 	// Unmarshal into a structure containing only the ".spec" and ".spec.groups" properties to filter out everything else
-// 	if err := json.Unmarshal(output, &filter); err != nil {
-// 		return nil, err
-// 	}
-
-// 	// Re-marshal to keep only the ".groups" out of the ".spec"
-// 	result, err := yaml.Marshal(&filter.Spec)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	results[rule.Namespace+"_"+rule.Name] = string(result)
-
-// 	return results, nil
-// }
-
-// sendAMConfigToMimir load an alert manager config with the remote Mimir
+// sendAMConfigToMimir check if the config is a valid alert manager config
+// And then load it with the remote Mimir
 func sendAMConfigToMimir(ctx context.Context, auth *mimirtool.Authentication, tenantId, url, config string) error {
 
-	// Put the rule on the FS
+	// Put the config on the FS
 	configName := "amc_" + tenantId
 	fileName, err := dumpConfigToFS(tenantId, configName, config)
 	if err != nil {
@@ -84,12 +66,12 @@ func sendAMConfigToMimir(ctx context.Context, auth *mimirtool.Authentication, te
 	return err
 }
 
-// dumpRuleToFS writes a rule for a specific tenant into the filesystem
-func dumpConfigToFS(tenant string, configName, rule string) (string, error) {
+// dumpConfigToFS writes a config for a specific tenant into the filesystem
+func dumpConfigToFS(tenant string, configName, config string) (string, error) {
 	path := temporaryFiles + tenant + "/"
 
 	_ = os.Mkdir(path, os.ModePerm)
 
 	fileName := path + configName
-	return fileName, os.WriteFile(fileName, []byte(rule), 0644)
+	return fileName, os.WriteFile(fileName, []byte(config), 0644)
 }
