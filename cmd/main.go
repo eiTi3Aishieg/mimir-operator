@@ -38,6 +38,7 @@ import (
 
 	mimirrandgenxyzv1alpha1 "mimir-operator/api/v1alpha1"
 	amCtrl "mimir-operator/internal/controller/mimiralertmanagerconfig"
+	mimirCtrl "mimir-operator/internal/controller/mimirrules"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -126,13 +127,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	// if err = (&mimirCtrl.MimirRulesReconciler{
-	// 	Client: mgr.GetClient(),
-	// 	Scheme: mgr.GetScheme(),
-	// }).SetupWithManager(mgr); err != nil {
-	// 	setupLog.Error(err, "unable to create controller", "controller", "MimirRules")
-	// 	os.Exit(1)
-	// }
+	if err = (&mimirCtrl.MimirRulesReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "MimirRules")
+		os.Exit(1)
+	}
 	if err = (&amCtrl.MimirAlertManagerConfigReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
