@@ -1,12 +1,12 @@
 apiVersion: mimir.randgen.xyz/v1alpha1
-kind: AlertManagerConfig
+kind: MimirAlertManagerConfig
 metadata:
   labels:
-    app.kubernetes.io/name: alertmanagerconfig
-    app.kubernetes.io/instance: alertmanagerconfig-sample
+    app.kubernetes.io/name: mimiralertmanagerconfig
+    app.kubernetes.io/instance: mimiralertmanagerconfig-sample
     app.kubernetes.io/part-of: mimir-operator
     app.kubernetes.io/managed-by: kustomize
     app.kubernetes.io/created-by: mimir-operator
-  name: alertmanagerconfig-sample
+  name: mimiralertmanagerconfig-sample
 spec:
   # TODO(user): Add fields here

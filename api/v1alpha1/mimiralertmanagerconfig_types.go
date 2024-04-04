@@ -7,8 +7,8 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// AlertManagerConfigSpec defines the desired state of AlertManagerConfig
-type AlertManagerConfigSpec struct {
+// MimirAlertManagerConfigSpec defines the desired state of MimirAlertManagerConfig
+type MimirAlertManagerConfigSpec struct {
 	// ID is the identifier of the tenant in the Mimir Ruler
 	ID string `json:"id"`
 
@@ -19,15 +19,11 @@ type AlertManagerConfigSpec struct {
 	Auth *Auth `json:"auth,omitempty"`
 
 	// Config that should be added to the tenant in the Mimir Alert Manager
-	Config *Config `json:"config"`
+	Config string `json:"config"`
 }
 
-type Config struct {
-	Selectors []*metav1.LabelSelector `json:"selectors"`
-}
-
-// AlertManagerConfigStatus defines the observed state of AlertManagerConfig
-type AlertManagerConfigStatus struct {
+// MimirAlertManagerConfigStatus defines the observed state of MimirAlertManagerConfig
+type MimirAlertManagerConfigStatus struct {
 	// Status describes whether the rules are synchronized
 	Status string `json:"status,omitempty"`
 
@@ -39,24 +35,24 @@ type AlertManagerConfigStatus struct {
 //+kubebuilder:subresource:status
 //+kubebuilder:printcolumn:name="Status",type=string,JSONPath=`.status.status`
 
-// AlertManagerConfig is the Schema for the alertmanagerconfigs API
-type AlertManagerConfig struct {
+// MimirAlertManagerConfig is the Schema for the mimiralertmanagerconfigs API
+type MimirAlertManagerConfig struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   AlertManagerConfigSpec   `json:"spec,omitempty"`
-	Status AlertManagerConfigStatus `json:"status,omitempty"`
+	Spec   MimirAlertManagerConfigSpec   `json:"spec,omitempty"`
+	Status MimirAlertManagerConfigStatus `json:"status,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 
-// AlertManagerConfigList contains a list of AlertManagerConfig
-type AlertManagerConfigList struct {
+// MimirAlertManagerConfigList contains a list of MimirAlertManagerConfig
+type MimirAlertManagerConfigList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []AlertManagerConfig `json:"items"`
+	Items           []MimirAlertManagerConfig `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&AlertManagerConfig{}, &AlertManagerConfigList{})
+	SchemeBuilder.Register(&MimirAlertManagerConfig{}, &MimirAlertManagerConfigList{})
 }

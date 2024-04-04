@@ -4,162 +4,113 @@ kind: CustomResourceDefinition
 metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.14.0
-  name: alertmanagerconfigs.mimir.randgen.xyz
+  name: mimiralertmanagerconfigs.mimir.randgen.xyz
 spec:
   group: mimir.randgen.xyz
   names:
-    kind: AlertManagerConfig
-    listKind: AlertManagerConfigList
-    plural: alertmanagerconfigs
-    singular: alertmanagerconfig
+    kind: MimirAlertManagerConfig
+    listKind: MimirAlertManagerConfigList
+    plural: mimiralertmanagerconfigs
+    singular: mimiralertmanagerconfig
   scope: Namespaced
   versions:
-  - additionalPrinterColumns:
-    - jsonPath: .status.status
-      name: Status
-      type: string
-    name: v1alpha1
-    schema:
-      openAPIV3Schema:
-        description: AlertManagerConfig is the Schema for the alertmanagerconfigs
-          API
-        properties:
-          apiVersion:
-            description: |-
-              APIVersion defines the versioned schema of this representation of an object.
-              Servers should convert recognized schemas to the latest internal value, and
-              may reject unrecognized values.
-              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
-            type: string
-          kind:
-            description: |-
-              Kind is a string value representing the REST resource this object represents.
-              Servers may infer this from the endpoint the client submits requests to.
-              Cannot be updated.
-              In CamelCase.
-              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
-            type: string
-          metadata:
-            type: object
-          spec:
-            description: AlertManagerConfigSpec defines the desired state of AlertManagerConfig
-            properties:
-              auth:
-                description: Authentication configuration if it is required by the
-                  remote endpoint
-                properties:
-                  key:
-                    type: string
-                  keySecretRef:
-                    description: |-
-                      LocalObjectReference contains enough information to let you locate the
-                      referenced object inside the same namespace.
-                    properties:
-                      name:
-                        description: |-
-                          Name of the referent.
-                          More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                          TODO: Add other useful fields. apiVersion, kind, uid?
-                        type: string
-                    type: object
-                    x-kubernetes-map-type: atomic
-                  token:
-                    type: string
-                  tokenSecretRef:
-                    description: |-
-                      LocalObjectReference contains enough information to let you locate the
-                      referenced object inside the same namespace.
-                    properties:
-                      name:
-                        description: |-
-                          Name of the referent.
-                          More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
-                          TODO: Add other useful fields. apiVersion, kind, uid?
-                        type: string
-                    type: object
-                    x-kubernetes-map-type: atomic
-                  user:
-                    type: string
-                type: object
-              config:
-                description: Config that should be added to the tenant in the Mimir
-                  Alert Manager
-                properties:
-                  selectors:
-                    items:
+    - additionalPrinterColumns:
+        - jsonPath: .status.status
+          name: Status
+          type: string
+      name: v1alpha1
+      schema:
+        openAPIV3Schema:
+          description:
+            MimirAlertManagerConfig is the Schema for the mimiralertmanagerconfigs
+            API
+          properties:
+            apiVersion:
+              description: |-
+                APIVersion defines the versioned schema of this representation of an object.
+                Servers should convert recognized schemas to the latest internal value, and
+                may reject unrecognized values.
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+              type: string
+            kind:
+              description: |-
+                Kind is a string value representing the REST resource this object represents.
+                Servers may infer this from the endpoint the client submits requests to.
+                Cannot be updated.
+                In CamelCase.
+                More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+              type: string
+            metadata:
+              type: object
+            spec:
+              description: MimirAlertManagerConfigSpec defines the desired state of MimirAlertManagerConfig
+              properties:
+                auth:
+                  description:
+                    Authentication configuration if it is required by the
+                    remote endpoint
+                  properties:
+                    key:
+                      type: string
+                    keySecretRef:
                       description: |-
-                        A label selector is a label query over a set of resources. The result of matchLabels and
-                        matchExpressions are ANDed. An empty label selector matches all objects. A null
-                        label selector matches no objects.
+                        LocalObjectReference contains enough information to let you locate the
+                        referenced object inside the same namespace.
                       properties:
-                        matchExpressions:
-                          description: matchExpressions is a list of label selector
-                            requirements. The requirements are ANDed.
-                          items:
-                            description: |-
-                              A label selector requirement is a selector that contains values, a key, and an operator that
-                              relates the key and values.
-                            properties:
-                              key:
-                                description: key is the label key that the selector
-                                  applies to.
-                                type: string
-                              operator:
-                                description: |-
-                                  operator represents a key's relationship to a set of values.
-                                  Valid operators are In, NotIn, Exists and DoesNotExist.
-                                type: string
-                              values:
-                                description: |-
-                                  values is an array of string values. If the operator is In or NotIn,
-                                  the values array must be non-empty. If the operator is Exists or DoesNotExist,
-                                  the values array must be empty. This array is replaced during a strategic
-                                  merge patch.
-                                items:
-                                  type: string
-                                type: array
-                            required:
-                            - key
-                            - operator
-                            type: object
-                          type: array
-                        matchLabels:
-                          additionalProperties:
-                            type: string
+                        name:
                           description: |-
-                            matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels
-                            map is equivalent to an element of matchExpressions, whose key field is "key", the
-                            operator is "In", and the values array contains only "value". The requirements are ANDed.
-                          type: object
+                            Name of the referent.
+                            More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                            TODO: Add other useful fields. apiVersion, kind, uid?
+                          type: string
                       type: object
                       x-kubernetes-map-type: atomic
-                    type: array
-                required:
-                - selectors
-                type: object
-              id:
-                description: ID is the identifier of the tenant in the Mimir Ruler
-                type: string
-              url:
-                description: URL is the URL of the remote Mimir Ruler
-                type: string
-            required:
-            - config
-            - id
-            - url
-            type: object
-          status:
-            description: AlertManagerConfigStatus defines the observed state of AlertManagerConfig
-            properties:
-              error:
-                description: Error describes the last synchronization error
-                type: string
-              status:
-                description: Status describes whether the rules are synchronized
-                type: string
-            type: object
-        type: object
-    served: true
-    storage: true
-    subresources:
-      status: {}
+                    token:
+                      type: string
+                    tokenSecretRef:
+                      description: |-
+                        LocalObjectReference contains enough information to let you locate the
+                        referenced object inside the same namespace.
+                      properties:
+                        name:
+                          description: |-
+                            Name of the referent.
+                            More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                            TODO: Add other useful fields. apiVersion, kind, uid?
+                          type: string
+                      type: object
+                      x-kubernetes-map-type: atomic
+                    user:
+                      type: string
+                  type: object
+                config:
+                  description:
+                    Config that should be added to the tenant in the Mimir
+                    Alert Manager
+                  type: string
+                id:
+                  description: ID is the identifier of the tenant in the Mimir Ruler
+                  type: string
+                url:
+                  description: URL is the URL of the remote Mimir Ruler
+                  type: string
+              required:
+                - config
+                - id
+                - url
+              type: object
+            status:
+              description: MimirAlertManagerConfigStatus defines the observed state of MimirAlertManagerConfig
+              properties:
+                error:
+                  description: Error describes the last synchronization error
+                  type: string
+                status:
+                  description: Status describes whether the rules are synchronized
+                  type: string
+              type: object
+          type: object
+      served: true
+      storage: true
+      subresources:
+        status: {}

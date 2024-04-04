@@ -104,7 +104,7 @@ func SynchronizeRules(ctx context.Context, auth *Authentication, ruleName, ruleF
 	return nil
 }
 
-func VerifyAlertManagerConfig(ctx context.Context, auth *Authentication, configFile string) error {
+func VerifyMimirAlertManagerConfig(ctx context.Context, auth *Authentication, configFile string) error {
 	args := []string{amSubCmd, "verify"}
 	args = append(args, configFile)
 
@@ -119,7 +119,7 @@ func VerifyAlertManagerConfig(ctx context.Context, auth *Authentication, configF
 	return nil
 }
 
-func LoadAlertManagerConfig(ctx context.Context, auth *Authentication, configFile string, tenant, url string) error {
+func LoadMimirAlertManagerConfig(ctx context.Context, auth *Authentication, configFile string, tenant, url string) error {
 	args := []string{amSubCmd, "load"}
 	args = append(args, getDefaultListArgs(tenant, url)...)
 	args = append(args, configFile)
@@ -137,7 +137,7 @@ func LoadAlertManagerConfig(ctx context.Context, auth *Authentication, configFil
 	return nil
 }
 
-func DeleteAlertManagerConfig(ctx context.Context, auth *Authentication, tenant, url string) error {
+func DeleteMimirAlertManagerConfig(ctx context.Context, auth *Authentication, tenant, url string) error {
 	args := []string{amSubCmd, "delete"}
 	args = append(args, getDefaultListArgs(tenant, url)...)
 

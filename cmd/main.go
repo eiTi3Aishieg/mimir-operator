@@ -37,8 +37,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	mimirrandgenxyzv1alpha1 "mimir-operator/api/v1alpha1"
-	amCtrl "mimir-operator/internal/controller/alertmanagerconfig"
-	mimirCtrl "mimir-operator/internal/controller/mimirrules"
+	amCtrl "mimir-operator/internal/controller/mimiralertmanagerconfig"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -127,18 +126,18 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&mimirCtrl.MimirRulesReconciler{
+	// if err = (&mimirCtrl.MimirRulesReconciler{
+	// 	Client: mgr.GetClient(),
+	// 	Scheme: mgr.GetScheme(),
+	// }).SetupWithManager(mgr); err != nil {
+	// 	setupLog.Error(err, "unable to create controller", "controller", "MimirRules")
+	// 	os.Exit(1)
+	// }
+	if err = (&amCtrl.MimirAlertManagerConfigReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "MimirRules")
-		os.Exit(1)
-	}
-	if err = (&amCtrl.AlertManagerConfigReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "AlertManagerConfig")
+		setupLog.Error(err, "unable to create controller", "controller", "MimirAlertManagerConfig")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder

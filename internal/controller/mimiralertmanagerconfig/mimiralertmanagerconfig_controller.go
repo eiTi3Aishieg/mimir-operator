@@ -1,4 +1,4 @@
-package alertmanagerconfig
+package mimiralertmanagerconfig
 
 import (
 	"context"
@@ -20,30 +20,30 @@ const (
 	temporaryFiles        = "/tmp/"
 )
 
-// AlertManagerConfigReconciler reconciles a AlertManagerConfig object
-type AlertManagerConfigReconciler struct {
+// MimirAlertManagerConfigReconciler reconciles a MimirAlertManagerConfig object
+type MimirAlertManagerConfigReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 }
 
-//+kubebuilder:rbac:groups=mimir.randgen.xyz,resources=alertmanagerconfigs,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=mimir.randgen.xyz,resources=alertmanagerconfigs/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=mimir.randgen.xyz,resources=alertmanagerconfigs/finalizers,verbs=update
+//+kubebuilder:rbac:groups=mimir.randgen.xyz,resources=mimiralertmanagerconfigs,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=mimir.randgen.xyz,resources=mimiralertmanagerconfigs/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=mimir.randgen.xyz,resources=mimiralertmanagerconfigs/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.17.0/pkg/reconcile
-func (r *AlertManagerConfigReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	amc := &domain.AlertManagerConfig{}
+func (r *MimirAlertManagerConfigReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	amc := &domain.MimirAlertManagerConfig{}
 	err := r.Get(ctx, req.NamespacedName, amc)
 
 	if err != nil {
 		return reconcile.Result{}, client.IgnoreNotFound(err)
 	}
 
-	log.FromContext(ctx).Info("Running reconcile on AlertManagerConfig")
+	log.FromContext(ctx).Info("Running reconcile on MimirAlertManagerConfig")
 
 	// Examine DeletionTimestamp to determine if object is under deletion
 	if amc.ObjectMeta.DeletionTimestamp.IsZero() {
@@ -77,7 +77,7 @@ func (r *AlertManagerConfigReconciler) Reconcile(ctx context.Context, req ctrl.R
 // This means that this function will be called for any modification in an Alert Manager Config or for
 // any creation of a new Alert Manager Config in the API. It is also called periodically for scheduled
 // reconciliation and at the startup of the controller.
-func (r *AlertManagerConfigReconciler) handleCreationAndChanges(ctx context.Context, amc *domain.AlertManagerConfig) error {
+func (r *MimirAlertManagerConfigReconciler) handleCreationAndChanges(ctx context.Context, amc *domain.MimirAlertManagerConfig) error {
 	reconciliationError := r.reconcileAMConfig(ctx, amc)
 	if err := r.setStatus(ctx, amc, reconciliationError); err != nil {
 		return err
@@ -86,20 +86,20 @@ func (r *AlertManagerConfigReconciler) handleCreationAndChanges(ctx context.Cont
 	return nil
 }
 
-// handleDeletion handles cleaning up after the deletion of a AlertManagerConfig
-func (r *AlertManagerConfigReconciler) handleDeletion(ctx context.Context, amc *domain.AlertManagerConfig) error {
-	log.FromContext(ctx).Info("Running reconciliation on deletion of a AlertManagerConfig")
+// handleDeletion handles cleaning up after the deletion of a MimirAlertManagerConfig
+func (r *MimirAlertManagerConfigReconciler) handleDeletion(ctx context.Context, amc *domain.MimirAlertManagerConfig) error {
+	log.FromContext(ctx).Info("Running reconciliation on deletion of a MimirAlertManagerConfig")
 
 	auth, err := utils.ExtractAuth(ctx, r.Client, amc.Spec.Auth, amc.ObjectMeta.Namespace)
 	if err != nil {
 		return fmt.Errorf("failed to extract authentication settings: %w", err)
 	}
 
-	return r.deleteAlertManagerConfigForTenant(ctx, auth, amc)
+	return r.deleteMimirAlertManagerConfigForTenant(ctx, auth, amc)
 }
 
 // reconcileAMConfig ensures Mimir correctly load the alert manager config
-func (r *AlertManagerConfigReconciler) reconcileAMConfig(ctx context.Context, amc *domain.AlertManagerConfig) error {
+func (r *MimirAlertManagerConfigReconciler) reconcileAMConfig(ctx context.Context, amc *domain.MimirAlertManagerConfig) error {
 	log.FromContext(ctx).Info("Running reconciliation of the Alert Manager Config")
 
 	auth, err := utils.ExtractAuth(ctx, r.Client, amc.Spec.Auth, amc.ObjectMeta.Namespace)
@@ -107,25 +107,25 @@ func (r *AlertManagerConfigReconciler) reconcileAMConfig(ctx context.Context, am
 		return fmt.Errorf("failed to extract authentication settings: %w", err)
 	}
 
-	config, err := r.configToString(amc)
+	// config, err := r.configToString(amc)
 
-	if err != nil {
-		return fmt.Errorf("failed to convert configuration to string: %w", err)
-	}
+	// if err != nil {
+	// 	return fmt.Errorf("failed to convert configuration to string: %w", err)
+	// }
 
-	return sendAMConfigToMimir(ctx, auth, amc.Spec.ID, amc.Spec.URL, config)
+	return sendAMConfigToMimir(ctx, auth, amc.Spec.ID, amc.Spec.URL, amc.Spec.Config)
 }
 
-// setStatus updates the status of AlertManagerConfig after reconciliation
+// setStatus updates the status of MimirAlertManagerConfig after reconciliation
 // If err is not nil, the error field is populated with the error and the status is set as "Failed"
 // Otherwise, status is set as "Synced"
-func (r *AlertManagerConfigReconciler) setStatus(ctx context.Context, amc *domain.AlertManagerConfig, err error) error {
+func (r *MimirAlertManagerConfigReconciler) setStatus(ctx context.Context, amc *domain.MimirAlertManagerConfig, err error) error {
 	if err != nil {
 		amc.Status.Status = "Failed"
 		amc.Status.Error = err.Error()
 
 		// Also log the error in the controller for clarity
-		log.FromContext(ctx).Error(err, "Failed to reconcile AlertManagerConfig")
+		log.FromContext(ctx).Error(err, "Failed to reconcile MimirAlertManagerConfig")
 	} else {
 		amc.Status.Status = "Synced"
 		amc.Status.Error = ""
@@ -135,8 +135,8 @@ func (r *AlertManagerConfigReconciler) setStatus(ctx context.Context, amc *domai
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *AlertManagerConfigReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *MimirAlertManagerConfigReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&domain.AlertManagerConfig{}).
+		For(&domain.MimirAlertManagerConfig{}).
 		Complete(r)
 }

@@ -1,5 +1,5 @@
 ## Append samples of your project ##
 resources:
-- _v1alpha1_mimirrules.yaml
-- _v1alpha1_alertmanagerconfig.yaml
+  - _v1alpha1_mimirrules.yaml
+  - _v1alpha1_mimiralertmanagerconfig.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples
