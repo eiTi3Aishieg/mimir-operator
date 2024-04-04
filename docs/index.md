@@ -2,6 +2,20 @@
 
 The Mimir Operator is a Kubernetes operator to control Mimir tenants using CRDs.
 
+Table of contents
+--
+- [Mimir Operator documentation](#mimir-operator-documentation)
+  * [Installing](#installing)
+    + [Helm](#helm)
+    + [Kustomize](#kustomize)
+  * [Authentication](#authentication)
+  * [Available CRDs](#available-crds)
+    + [MimirRules](#mimirrules)
+      - [Installing Prometheus Rules for a Tenant](#installing-prometheus-rules-for-a-tenant)
+      - [Overriding/disabling rules for a Tenant](#overriding-disabling-rules-for-a-tenant)
+      - [Adding external labels](#adding-external-labels)
+    + [MimirAlertManagerConfig](#mimiralertmanagerconfig)
+
 ## Installing
 
 ### Helm
@@ -195,7 +209,7 @@ spec:
 
 The operator will only override properties that are specified. For example, if specifying an override for the "expr" property, but not the "labels" property, the rule will be deployed on Mimir with the overriden "expr" but will keep the labels inherited from the PrometheusRule.
 
-## Adding external labels
+### Adding external labels
 
 It is possible to add labels to every rule installed in Mimir by a MimirRule using ```externalLabels```   
 For example, it can be useful to add a label indicating what tenant is emitting the alert.  
@@ -227,3 +241,64 @@ spec:
 
 The Rules installed in the Ruler by the operator will all have those labels appended to their list of labels.  
 This effectively has the same effect as overriding each individual alert to add a new label.
+
+### MimirAlertManagerConfig
+
+
+The MimirAlertManagerConfig CRD allows the remote control of the Alert Manager Config for a specific tenant in a Mimir from Kubernetes.  
+
+
+The general structure of the CRD is as follows:
+
+```yaml
+apiVersion: mimir.randgen.xyz/v1alpha1
+kind: AlertManagerConfig
+metadata:
+  name: mimiralertmanagerconfig-sample
+  namespace: default
+spec:
+  id: "tenant1" # ID of the tenant in the Mimir Ruler (X-ScopeOrg-ID header)
+  url: "http://mimir.instance.com" # URL of the Mimir Ruler instance, used by the operator to connect and operate on the tenants
+  
+  
+  # Authentication parameters if the endpoint is protected (see the Authentication section for more information)
+  # auth:
+  #   user: "user"
+  #   key: "user-key"
+  
+  # The config section is used to declare the alert manager configuration on a tenant.
+  config: |
+    your alert manager configuration in yaml
+```
+
+
+### Installing a MimirAlertManagerConfig for a Tenant
+
+In the following example, the **mimiralertmanagerconfig-sample** MimirAlertManagerConfig will be installed in the Mimir tenant under the namespace *default*.
+Then the operator will load the configuration for the tenant **tenant1** in *http://mimir.instance.com*.
+
+This example shows how to install a MimirAlertManagerConfig to configure a teams webhook into the Alert Manager:
+```yaml
+apiVersion: mimir.randgen.xyz/v1alpha1
+kind: AlertManagerConfig
+metadata:
+  name: mimiralertmanagerconfig-sample
+  namespace: default
+spec:
+  id: "tenant1"
+  url: "http://mimir.instance.com" 
+  config: |
+    receivers:
+      - name: teams
+        msteams_configs:
+          - webhook_url: "webhook_url"
+
+    route:
+      receiver: teams # Default is no child route is matched
+      group_by: ["alertname", "severity"]
+      group_interval: 1m
+      repeat_interval: 1h
+      routes: # Child routes
+        - receiver: teams
+          continue: true
+```
