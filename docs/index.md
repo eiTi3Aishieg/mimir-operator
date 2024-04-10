@@ -23,7 +23,7 @@ Table of contents
 The Helm Chart is published in the OCI format on GitHub.
 
 ```
-helm install -i mimir-operator oci://ghcr.io/AmiditeX/helm-charts/mimir-operator --version v0.1.6
+helm install -i mimir-operator oci://ghcr.io/AmiditeX/helm-charts/mimir-operator --version v0.2.0
 ```
 
 Helm is the easiest way to install the operator. The manifests for the Helm Chart can be found in ```deploy/helm/mimir-operator```.  
