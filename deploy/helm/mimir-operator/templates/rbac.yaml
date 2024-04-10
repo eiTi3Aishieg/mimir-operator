@@ -15,6 +15,7 @@ rules:
       - mimir.randgen.xyz
     resources:
       - mimirrules
+      - mimiralertmanagerconfigs
     verbs:
       - create
       - delete
@@ -27,12 +28,14 @@ rules:
       - mimir.randgen.xyz
     resources:
       - mimirrules/finalizers
+      - mimiralertmanagerconfigs/finalizers
     verbs:
       - update
   - apiGroups:
       - mimir.randgen.xyz
     resources:
       - mimirrules/status
+      - mimiralertmanagerconfigs/status
     verbs:
       - get
       - patch
@@ -46,7 +49,6 @@ rules:
       - list
       - watch
 
-
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -54,7 +56,7 @@ metadata:
   name: {{ include "mimir-operator.fullname" . }}
 subjects:
   - kind: ServiceAccount
-    name:  {{ include "mimir-operator.fullname" . }}
+    name: {{ include "mimir-operator.fullname" . }}
     namespace: {{ .Release.Namespace }}
 roleRef:
   kind: ClusterRole

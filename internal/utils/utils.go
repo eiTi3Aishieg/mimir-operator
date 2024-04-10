@@ -3,9 +3,10 @@ package utils
 import (
 	"context"
 	"fmt"
-	v1 "k8s.io/api/core/v1"
-	domainv1alpha1 "mimir-operator/api/v1alpha1"
+	mimirrandgenxyzv1alpha1 "mimir-operator/api/v1alpha1"
 	"mimir-operator/internal/mimirtool"
+
+	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -59,7 +60,7 @@ func FindValueByKeyInSecret(ctx context.Context, c client.Client, secretName, se
 // This function is safe to call with the 'auth' parameter set to 'nil' and will return a 'nil' auth structure and no error
 // This is often needed if no authentication was provided by the user creating the CRD, as mimirtool can be
 // called without any authentication enabled, thus having no need for a mandatory authentication field in the CRDs
-func ExtractAuth(ctx context.Context, client client.Client, auth *domainv1alpha1.Auth, namespace string) (*mimirtool.Authentication, error) {
+func ExtractAuth(ctx context.Context, client client.Client, auth *mimirrandgenxyzv1alpha1.Auth, namespace string) (*mimirtool.Authentication, error) {
 	if auth == nil { // No authentication settings were provided
 		return nil, nil
 	}

@@ -1,19 +1,19 @@
-package controllers
+package mimirrules
 
 import (
 	"context"
 	"fmt"
+	"mimir-operator/internal/utils"
+
 	prometheus "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"mimir-operator/internal/utils"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	domain "mimir-operator/api/v1alpha1"
 )
@@ -115,7 +115,7 @@ func (r *MimirRulesReconciler) reconcileRules(ctx context.Context, mr *domain.Mi
 // reconcileOnPrometheusRuleChange sends a reconcile request to EVERY MimirRule on the cluster
 // This is done to retrigger the synchronization of MimirRules if new PrometheusRules have been added
 // or if some PrometheusRules have changed their definition
-func (r *MimirRulesReconciler) reconcileOnPrometheusRuleChange(rule client.Object) []reconcile.Request {
+func (r *MimirRulesReconciler) reconcileOnPrometheusRuleChange(ctx context.Context, rule client.Object) []reconcile.Request {
 	allMimirRules := &domain.MimirRulesList{}
 	err := r.List(context.Background(), allMimirRules)
 	if err != nil {
@@ -159,7 +159,7 @@ func (r *MimirRulesReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&domain.MimirRules{}).
 		Watches( // Setup WATCH on PrometheusRules to dynamically reload MimirRules into the MimirRuler if a selected rule has been changed
-			&source.Kind{Type: &prometheus.PrometheusRule{}},
+			&prometheus.PrometheusRule{},
 			handler.EnqueueRequestsFromMapFunc(r.reconcileOnPrometheusRuleChange)).
 		Complete(r)
 }

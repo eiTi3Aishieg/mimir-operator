@@ -1,0 +1,27 @@
+# permissions for end users to view mimiralertmanagerconfigs.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: mimiralertmanagerconfig-viewer-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: mimir-operator
+    app.kubernetes.io/part-of: mimir-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: mimiralertmanagerconfig-viewer-role
+rules:
+  - apiGroups:
+      - mimir.randgen.xyz
+    resources:
+      - mimiralertmanagerconfigs
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - mimir.randgen.xyz
+    resources:
+      - mimiralertmanagerconfigs/status
+    verbs:
+      - get
