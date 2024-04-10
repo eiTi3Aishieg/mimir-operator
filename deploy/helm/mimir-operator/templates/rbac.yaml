@@ -1,7 +1,7 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: { { include "mimir-operator.fullname" . } }
+  name: {{ include "mimir-operator.fullname" . }}
 rules:
   - apiGroups:
       - ""
@@ -53,12 +53,12 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: { { include "mimir-operator.fullname" . } }
+  name: {{ include "mimir-operator.fullname" . }}
 subjects:
   - kind: ServiceAccount
-    name: { { include "mimir-operator.fullname" . } }
-    namespace: { { .Release.Namespace } }
+    name: {{ include "mimir-operator.fullname" . }}
+    namespace: {{ .Release.Namespace }}
 roleRef:
   kind: ClusterRole
-  name: { { include "mimir-operator.fullname" . } }
+  name: {{ include "mimir-operator.fullname" . }}
   apiGroup: rbac.authorization.k8s.io

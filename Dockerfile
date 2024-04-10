@@ -14,7 +14,10 @@ RUN go mod download
 # Copy the go source
 COPY cmd/main.go cmd/main.go
 COPY api/ api/
-COPY internal/controller/ internal/controller/
+COPY internal/ internal/
+
+RUN curl -fLo mimirtool https://github.com/grafana/mimir/releases/latest/download/mimirtool-linux-amd64 && \
+    chmod +x mimirtool
 
 # Build
 # the GOARCH has not a default value to allow the binary be built according to the host where the command
@@ -27,7 +30,10 @@ RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH} go build -a -o ma
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
 FROM gcr.io/distroless/static:nonroot
 WORKDIR /
+
 COPY --from=builder /workspace/manager .
+COPY --from=builder /workspace/mimirtool /bin/mimirtool
+
 USER 65532:65532
 
 ENTRYPOINT ["/manager"]

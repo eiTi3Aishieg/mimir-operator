@@ -107,12 +107,6 @@ func (r *MimirAlertManagerConfigReconciler) reconcileAMConfig(ctx context.Contex
 		return fmt.Errorf("failed to extract authentication settings: %w", err)
 	}
 
-	// config, err := r.configToString(amc)
-
-	// if err != nil {
-	// 	return fmt.Errorf("failed to convert configuration to string: %w", err)
-	// }
-
 	return sendAMConfigToMimir(ctx, auth, amc.Spec.ID, amc.Spec.URL, amc.Spec.Config)
 }
 

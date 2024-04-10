@@ -19,18 +19,6 @@ func (r *MimirAlertManagerConfigReconciler) deleteMimirAlertManagerConfigForTena
 	return nil
 }
 
-// configToString reads an MimirAlertManagerConfig CRD keeps only the Config Spec
-// The other fields are irrelevant to Mimir as we only need to apply the config part for the alert manager
-// func (r *MimirAlertManagerConfigReconciler) configToString(config *domain.MimirAlertManagerConfig) (string, error) {
-// 	// Re-marshal to keep only the ".groups" out of the ".spec"
-// 	result, err := yaml.Marshal(config.Spec.Config)
-// 	if err != nil {
-// 		return "", err
-// 	}
-
-// 	return string(result), nil
-// }
-
 // sendAMConfigToMimir check if the config is a valid alert manager config
 // And then load it with the remote Mimir
 func sendAMConfigToMimir(ctx context.Context, auth *mimirtool.Authentication, tenantId, url, config string) error {

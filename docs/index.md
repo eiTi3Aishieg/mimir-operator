@@ -245,7 +245,7 @@ This effectively has the same effect as overriding each individual alert to add 
 ### MimirAlertManagerConfig
 
 
-The MimirAlertManagerConfig CRD allows the remote control of the Alert Manager Config for a specific tenant in a Mimir from Kubernetes.  
+The MimirAlertManagerConfig CRD allows the remote control of the Alertmanager config for a specific tenant in a Mimir instance from Kubernetes.
 
 
 The general structure of the CRD is as follows:
@@ -277,7 +277,7 @@ spec:
 In the following example, the **mimiralertmanagerconfig-sample** MimirAlertManagerConfig will be installed in the Mimir tenant under the namespace *default*.
 Then the operator will load the configuration for the tenant **tenant1** in *http://mimir.instance.com*.
 
-This example shows how to install a MimirAlertManagerConfig to configure a teams webhook into the Alert Manager:
+This example shows how to install a MimirAlertManagerConfig to configure a Teams webhook into the Alert Manager:
 ```yaml
 apiVersion: mimir.randgen.xyz/v1alpha1
 kind: AlertManagerConfig
