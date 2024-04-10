@@ -15,7 +15,7 @@ rules:
       - mimir.randgen.xyz
     resources:
       - mimirrules
-      - mimiralertmanagerconfig
+      - mimiralertmanagerconfigs
     verbs:
       - create
       - delete
@@ -28,14 +28,14 @@ rules:
       - mimir.randgen.xyz
     resources:
       - mimirrules/finalizers
-      - mimiralertmanagerconfig/finalizers
+      - mimiralertmanagerconfigs/finalizers
     verbs:
       - update
   - apiGroups:
       - mimir.randgen.xyz
     resources:
       - mimirrules/status
-      - mimiralertmanagerconfig/status
+      - mimiralertmanagerconfigs/status
     verbs:
       - get
       - patch
