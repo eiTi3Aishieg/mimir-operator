@@ -13,6 +13,7 @@ import (
 
 	domain "github.com/AmiditeX/mimir-operator/api/v1alpha1"
 	"github.com/AmiditeX/mimir-operator/internal/controller/mimirapi"
+	"github.com/AmiditeX/mimir-operator/internal/mimirtool"
 	"github.com/AmiditeX/mimir-operator/internal/utils"
 )
 
@@ -47,10 +48,7 @@ func (r *MimirAlertManagerConfigReconciler) Reconcile(ctx context.Context, req c
 
 	log.FromContext(ctx).Info("Running reconcile on MimirAlertManagerConfig")
 
-	if err := r.createMimirClient(ctx, amc); err != nil {
-		// Status is set only on failure to delete (the status is going to be deleted anyway if it succeeds)
-		return ctrl.Result{}, r.setStatus(ctx, amc, err)
-	}
+	r.createMimirClient(ctx, amc)
 
 	// Examine DeletionTimestamp to determine if object is under deletion
 	if amc.ObjectMeta.DeletionTimestamp.IsZero() {
@@ -85,6 +83,10 @@ func (r *MimirAlertManagerConfigReconciler) createMimirClient(ctx context.Contex
 	auth, err := utils.ExtractAuth(ctx, r.Client, amc.Spec.Auth, amc.ObjectMeta.Namespace)
 	if err != nil {
 		return fmt.Errorf("failed to extract authentication settings: %w", err)
+	}
+	// if no auth provided init empty object to avoid error
+	if auth == nil {
+		auth = &mimirtool.Authentication{}
 	}
 
 	c, err := mimirapi.New(mimirapi.Config{
