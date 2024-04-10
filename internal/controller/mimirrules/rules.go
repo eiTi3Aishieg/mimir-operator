@@ -1,18 +1,19 @@
-package controllers
+package mimirrules
 
 import (
 	"context"
 	"encoding/json"
 	"fmt"
+	domain "mimir-operator/api/v1alpha1"
+	"mimir-operator/internal/mimirtool"
+	"mimir-operator/internal/utils"
+	"os"
+
 	prometheus "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"gopkg.in/yaml.v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
-	domain "mimir-operator/api/v1alpha1"
-	"mimir-operator/internal/mimirtool"
-	"mimir-operator/internal/utils"
-	"os"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -239,7 +240,8 @@ func applyOverrides(overrides map[string]domain.Override, list *prometheus.Prome
 				}
 
 				if override.For != "" {
-					rule.For = prometheus.Duration(override.For)
+					d := prometheus.Duration(override.For)
+					rule.For = &d
 				}
 
 				item.Spec.Groups[g].Rules[r] = rule // We modified a copy of the rule, put it back in the *Rule

@@ -2,7 +2,6 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  creationTimestamp: null
   name: manager-role
 rules:
 - apiGroups:
@@ -13,6 +12,32 @@ rules:
   - get
   - list
   - watch
+- apiGroups:
+  - mimir.randgen.xyz
+  resources:
+  - mimiralertmanagerconfigs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - mimir.randgen.xyz
+  resources:
+  - mimiralertmanagerconfigs/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - mimir.randgen.xyz
+  resources:
+  - mimiralertmanagerconfigs/status
+  verbs:
+  - get
+  - patch
+  - update
 - apiGroups:
   - mimir.randgen.xyz
   resources:
