@@ -12,6 +12,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	domain "github.com/AmiditeX/mimir-operator/api/v1alpha1"
+	"github.com/AmiditeX/mimir-operator/internal/controller/mimirapi"
 	"github.com/AmiditeX/mimir-operator/internal/utils"
 )
 
@@ -23,6 +24,7 @@ const (
 // MimirAlertManagerConfigReconciler reconciles a MimirAlertManagerConfig object
 type MimirAlertManagerConfigReconciler struct {
 	client.Client
+	*mimirapi.MimirClient
 	Scheme *runtime.Scheme
 }
 
@@ -45,6 +47,8 @@ func (r *MimirAlertManagerConfigReconciler) Reconcile(ctx context.Context, req c
 
 	log.FromContext(ctx).Info("Running reconcile on MimirAlertManagerConfig")
 
+	r.createMimirClient(ctx, amc)
+
 	// Examine DeletionTimestamp to determine if object is under deletion
 	if amc.ObjectMeta.DeletionTimestamp.IsZero() {
 		// The object is not being deleted, so if it does not have our finalizer,
@@ -59,7 +63,7 @@ func (r *MimirAlertManagerConfigReconciler) Reconcile(ctx context.Context, req c
 	} else {
 		// The object is being deleted
 		if controllerutil.ContainsFinalizer(amc, alertManagerFinalizer) {
-			if err := r.handleDeletion(ctx, amc); err != nil {
+			if err := r.handleDeletion(ctx); err != nil {
 				// Status is set only on failure to delete (the status is going to be deleted anyway if it succeeds)
 				return ctrl.Result{}, r.setStatus(ctx, amc, err)
 			}
@@ -73,12 +77,35 @@ func (r *MimirAlertManagerConfigReconciler) Reconcile(ctx context.Context, req c
 	return ctrl.Result{}, r.handleCreationAndChanges(ctx, amc)
 }
 
+func (r *MimirAlertManagerConfigReconciler) createMimirClient(ctx context.Context, amc *domain.MimirAlertManagerConfig) error {
+
+	auth, err := utils.ExtractAuth(ctx, r.Client, amc.Spec.Auth, amc.ObjectMeta.Namespace)
+	if err != nil {
+		return fmt.Errorf("failed to extract authentication settings: %w", err)
+	}
+
+	c, err := mimirapi.New(mimirapi.Config{
+		User:      auth.Username,
+		Key:       auth.Key,
+		AuthToken: auth.Token,
+		Address:   amc.Spec.URL, //MARK: TODO: verify this !!!
+		ID:        amc.Spec.ID,
+	})
+
+	if err != nil {
+		return fmt.Errorf("failed to create mimir client: %w", err)
+	}
+
+	r.MimirClient = c
+	return nil
+}
+
 // handleCreationAndChanges handles reconciliation of Alert Manager Config for events that are not a deletion
 // This means that this function will be called for any modification in an Alert Manager Config or for
 // any creation of a new Alert Manager Config in the API. It is also called periodically for scheduled
 // reconciliation and at the startup of the controller.
 func (r *MimirAlertManagerConfigReconciler) handleCreationAndChanges(ctx context.Context, amc *domain.MimirAlertManagerConfig) error {
-	reconciliationError := r.reconcileAMConfig(ctx, amc)
+	reconciliationError := r.reconcileAMConfig(ctx, amc.Spec.Config)
 	if err := r.setStatus(ctx, amc, reconciliationError); err != nil {
 		return err
 	}
@@ -87,27 +114,17 @@ func (r *MimirAlertManagerConfigReconciler) handleCreationAndChanges(ctx context
 }
 
 // handleDeletion handles cleaning up after the deletion of a MimirAlertManagerConfig
-func (r *MimirAlertManagerConfigReconciler) handleDeletion(ctx context.Context, amc *domain.MimirAlertManagerConfig) error {
+func (r *MimirAlertManagerConfigReconciler) handleDeletion(ctx context.Context) error {
 	log.FromContext(ctx).Info("Running reconciliation on deletion of a MimirAlertManagerConfig")
 
-	auth, err := utils.ExtractAuth(ctx, r.Client, amc.Spec.Auth, amc.ObjectMeta.Namespace)
-	if err != nil {
-		return fmt.Errorf("failed to extract authentication settings: %w", err)
-	}
-
-	return r.deleteMimirAlertManagerConfigForTenant(ctx, auth, amc)
+	return r.MimirClient.DeleteAlermanagerConfig(ctx)
 }
 
 // reconcileAMConfig ensures Mimir correctly load the alert manager config
-func (r *MimirAlertManagerConfigReconciler) reconcileAMConfig(ctx context.Context, amc *domain.MimirAlertManagerConfig) error {
+func (r *MimirAlertManagerConfigReconciler) reconcileAMConfig(ctx context.Context, config string) error {
 	log.FromContext(ctx).Info("Running reconciliation of the Alert Manager Config")
 
-	auth, err := utils.ExtractAuth(ctx, r.Client, amc.Spec.Auth, amc.ObjectMeta.Namespace)
-	if err != nil {
-		return fmt.Errorf("failed to extract authentication settings: %w", err)
-	}
-
-	return sendAMConfigToMimir(ctx, auth, amc.Spec.ID, amc.Spec.URL, amc.Spec.Config)
+	return r.MimirClient.CreateAlertmanagerConfig(ctx, config, nil)
 }
 
 // setStatus updates the status of MimirAlertManagerConfig after reconciliation
