@@ -47,7 +47,10 @@ func (r *MimirAlertManagerConfigReconciler) Reconcile(ctx context.Context, req c
 
 	log.FromContext(ctx).Info("Running reconcile on MimirAlertManagerConfig")
 
-	r.createMimirClient(ctx, amc)
+	if err := r.createMimirClient(ctx, amc); err != nil {
+		// Status is set only on failure to delete (the status is going to be deleted anyway if it succeeds)
+		return ctrl.Result{}, r.setStatus(ctx, amc, err)
+	}
 
 	// Examine DeletionTimestamp to determine if object is under deletion
 	if amc.ObjectMeta.DeletionTimestamp.IsZero() {
