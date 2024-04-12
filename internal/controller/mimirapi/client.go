@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/dskit/user"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	// "github.com/grafana/mimir/pkg/util/version"
 )
 
 const (

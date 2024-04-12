@@ -8,10 +8,7 @@ package mimirapi
 import (
 	"bytes"
 	"context"
-	"io"
 
-	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 )
 
@@ -52,31 +49,4 @@ func (r *MimirClient) DeleteAlermanagerConfig(ctx context.Context) error {
 	res.Body.Close()
 
 	return nil
-}
-
-// GetAlertmanagerConfig retrieves a Mimir cluster's Alertmanager config.
-func (r *MimirClient) GetAlertmanagerConfig(ctx context.Context) (string, map[string]string, error) {
-	res, err := r.doRequest(ctx, alertmanagerAPIPath, "GET", nil, -1)
-	if err != nil {
-		log.Debugln("no alert config present in response")
-		return "", nil, err
-	}
-
-	defer res.Body.Close()
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		return "", nil, err
-	}
-
-	compat := configCompat{}
-	err = yaml.Unmarshal(body, &compat)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"body": string(body),
-		}).Debugln("failed to unmarshal rule group from response")
-
-		return "", nil, errors.Wrap(err, "unable to unmarshal response")
-	}
-
-	return compat.AlertmanagerConfig, compat.TemplateFiles, nil
 }
