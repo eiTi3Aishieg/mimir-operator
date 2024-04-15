@@ -13,7 +13,6 @@ import (
 
 	domain "github.com/AmiditeX/mimir-operator/api/v1alpha1"
 	"github.com/AmiditeX/mimir-operator/internal/controller/mimirapi"
-	"github.com/AmiditeX/mimir-operator/internal/mimirtool"
 	"github.com/AmiditeX/mimir-operator/internal/utils"
 )
 
@@ -89,7 +88,7 @@ func (r *MimirAlertManagerConfigReconciler) createMimirClient(ctx context.Contex
 	}
 	// if no auth provided init empty object to avoid error
 	if auth == nil {
-		auth = &mimirtool.Authentication{}
+		auth = &utils.Authentication{}
 	}
 
 	c, err := mimirapi.New(mimirapi.Config{

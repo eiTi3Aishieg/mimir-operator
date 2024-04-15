@@ -3,7 +3,6 @@ package mimirrules
 import (
 	"context"
 	"fmt"
-	
 
 	prometheus "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -17,7 +16,6 @@ import (
 
 	domain "github.com/AmiditeX/mimir-operator/api/v1alpha1"
 	"github.com/AmiditeX/mimir-operator/internal/controller/mimirapi"
-	"github.com/AmiditeX/mimir-operator/internal/mimirtool"
 	"github.com/AmiditeX/mimir-operator/internal/utils"
 )
 
@@ -92,7 +90,7 @@ func (r *MimirRulesReconciler) createMimirClient(ctx context.Context, mr *domain
 	}
 	// if no auth provided init empty object to avoid error
 	if auth == nil {
-		auth = &mimirtool.Authentication{}
+		auth = &utils.Authentication{}
 	}
 
 	c, err := mimirapi.New(mimirapi.Config{
@@ -133,13 +131,7 @@ func (r *MimirRulesReconciler) handleDeletion(ctx context.Context, mr *domain.Mi
 func (r *MimirRulesReconciler) reconcileRules(ctx context.Context, mr *domain.MimirRules, mc *mimirapi.MimirClient) error {
 	log.FromContext(ctx).Info("Running reconciliation of the rules")
 
-	auth, err := utils.ExtractAuth(ctx, r.Client, mr.Spec.Auth, mr.ObjectMeta.Namespace)
-	if err != nil {
-		return fmt.Errorf("failed to extract authentication settings: %w", err)
-	}
-
-	return r.syncRulesToRuler(ctx, mc,
-		auth, mr)
+	return r.syncRulesToRuler(ctx, mc, mr)
 }
 
 // reconcileOnPrometheusRuleChange sends a reconcile request to EVERY MimirRule on the cluster

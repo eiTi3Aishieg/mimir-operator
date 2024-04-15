@@ -46,6 +46,22 @@ func (r *MimirClient) CreateRuleGroup(ctx context.Context, namespace string, rg 
 	return nil
 }
 
+// CreateRuleGroup creates a new rule group
+func (r *MimirClient) CreateRuleGroupStr(ctx context.Context, namespace, rg string) error {
+	payload := []byte(rg)
+	escapedNamespace := url.PathEscape(namespace)
+	path := r.apiPath + "/" + escapedNamespace
+
+	res, err := r.doRequest(ctx, path, "POST", bytes.NewBuffer(payload), int64(len(payload)))
+	if err != nil {
+		return err
+	}
+
+	res.Body.Close()
+
+	return nil
+}
+
 // DeleteRuleGroup deletes a rule group
 func (r *MimirClient) DeleteRuleGroup(ctx context.Context, namespace, groupName string) error {
 	escapedNamespace := url.PathEscape(namespace)

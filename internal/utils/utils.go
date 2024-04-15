@@ -3,13 +3,17 @@ package utils
 import (
 	"context"
 	"fmt"
-
 	mimirrandgenxyzv1alpha1 "github.com/AmiditeX/mimir-operator/api/v1alpha1"
-	"github.com/AmiditeX/mimir-operator/internal/mimirtool"
 
 	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
+
+type Authentication struct {
+	Username string
+	Key      string
+	Token    string
+}
 
 // RemoveDuplicate removes duplicate values from a slice
 func RemoveDuplicate[T string | int](sliceList []T) []T {
@@ -57,17 +61,17 @@ func FindValueByKeyInSecret(ctx context.Context, c client.Client, secretName, se
 }
 
 // ExtractAuth returns an internal authentication structure from a CRD authentication structure
-// The returned authentication structure can be used by the mimirtool package to generate authenticated command calls
+// The returned authentication structure can be used by the package to generate authenticated command calls
 // This function is safe to call with the 'auth' parameter set to 'nil' and will return a 'nil' auth structure and no error
-// This is often needed if no authentication was provided by the user creating the CRD, as mimirtool can be
+// This is often needed if no authentication was provided by the user creating the CRD, as can be
 // called without any authentication enabled, thus having no need for a mandatory authentication field in the CRDs
-func ExtractAuth(ctx context.Context, client client.Client, auth *mimirrandgenxyzv1alpha1.Auth, namespace string) (*mimirtool.Authentication, error) {
+func ExtractAuth(ctx context.Context, client client.Client, auth *mimirrandgenxyzv1alpha1.Auth, namespace string) (*Authentication, error) {
 	if auth == nil { // No authentication settings were provided
 		return nil, nil
 	}
 
 	if auth.Token != "" { // Token plaintext value has precedence over everything else
-		return &mimirtool.Authentication{
+		return &Authentication{
 			Token: auth.Token,
 		}, nil
 	}
@@ -78,13 +82,13 @@ func ExtractAuth(ctx context.Context, client client.Client, auth *mimirrandgenxy
 			return nil, err
 		}
 
-		return &mimirtool.Authentication{
+		return &Authentication{
 			Token: token,
 		}, nil
 	}
 
 	if auth.Key != "" { // Plaintext key has precedence
-		return &mimirtool.Authentication{
+		return &Authentication{
 			Username: auth.User,
 			Key:      auth.Key,
 		}, nil
@@ -96,7 +100,7 @@ func ExtractAuth(ctx context.Context, client client.Client, auth *mimirrandgenxy
 			return nil, err
 		}
 
-		return &mimirtool.Authentication{
+		return &Authentication{
 			Username: auth.User,
 			Key:      key,
 		}, nil

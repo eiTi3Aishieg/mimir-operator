@@ -4,11 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
-	
 	domain "github.com/AmiditeX/mimir-operator/api/v1alpha1"
 	"github.com/AmiditeX/mimir-operator/internal/controller/mimirapi"
-	"github.com/AmiditeX/mimir-operator/internal/mimirtool"
 	"github.com/AmiditeX/mimir-operator/internal/utils"
 
 	prometheus "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
@@ -17,7 +14,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 // specFilter is used to deserialize YAML into it and filter out properties different from ".spec"
@@ -31,7 +27,7 @@ type spec struct {
 }
 
 // syncRulesToRuler finds all the PrometheusRules relevant for a MimirRules and sends them to Mimir
-func (r *MimirRulesReconciler) syncRulesToRuler(ctx context.Context, mc *mimirapi.MimirClient, auth *mimirtool.Authentication, mr *domain.MimirRules) error {
+func (r *MimirRulesReconciler) syncRulesToRuler(ctx context.Context, mc *mimirapi.MimirClient, mr *domain.MimirRules) error {
 	rules, err := r.findPrometheusRulesFromLabels(ctx, mr.Spec.Rules.Selectors)
 	if err != nil {
 		return err
@@ -50,8 +46,8 @@ func (r *MimirRulesReconciler) syncRulesToRuler(ctx context.Context, mc *mimirap
 	}
 
 	// Synchronize each Rule on the Mimir Ruler
-	for ruleName, rule := range unpackedRules {
-		if err := sendRuleToMimir(ctx, auth, mr.Spec.ID, mr.Spec.URL, ruleName, rule); err != nil {
+	for namespace, ruleGroup := range unpackedRules {
+		if err := mc.CreateRuleGroupStr(ctx, namespace, ruleGroup); err != nil {
 			return err
 		}
 	}
@@ -90,28 +86,6 @@ func (r *MimirRulesReconciler) deleteRulesForTenant(ctx context.Context, mr *dom
 	}
 
 	return nil
-}
-
-// sendRuleToMimir synchronizes a PrometheusRule with the remote Mimir
-func sendRuleToMimir(ctx context.Context, auth *mimirtool.Authentication, tenantId, url, ruleName, rule string) error {
-	// Put the rule on the FS
-	fileName, err := dumpRuleToFS(tenantId, ruleName, rule)
-	if err != nil {
-		return err
-	}
-
-	// Send the rule to Mimir for synchronization
-	// MARK: mimirtool.SynchronizeRules
-	err = mimirtool.SynchronizeRules(ctx, auth, ruleName, fileName, tenantId, url)
-
-	// Cleanup after ourselves
-	if err := os.RemoveAll(fileName); err != nil {
-		log.FromContext(ctx).
-			WithValues("mimirrules", tenantId).
-			Error(err, "failed to cleanup fs after sending rules to mimir")
-	}
-
-	return err
 }
 
 // findPrometheusRulesFromLabels lists all the CRs of type "PrometheusRules" based on label selectors
@@ -276,16 +250,6 @@ func (r *MimirRulesReconciler) unpackRules(list *prometheus.PrometheusRuleList) 
 	}
 
 	return results, nil
-}
-
-// dumpRuleToFS writes a rule for a specific tenant into the filesystem
-func dumpRuleToFS(tenant string, ruleName, rule string) (string, error) {
-	path := temporaryFiles + tenant + "/"
-
-	_ = os.Mkdir(path, os.ModePerm)
-
-	fileName := path + ruleName
-	return fileName, os.WriteFile(fileName, []byte(rule), 0644)
 }
 
 // diffRuleNamespaces returns Rule namespaces that are currently in Mimir for the tenant but not in the ruleMap
