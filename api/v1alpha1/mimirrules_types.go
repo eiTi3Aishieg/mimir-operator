@@ -69,6 +69,10 @@ type MimirRulesStatus struct {
 
 	// Error describes the last synchronization error
 	Error string `json:"error,omitempty"`
+
+	// Store concerned which prometheus rules are used in reference
+	// This allow a better change detection
+	RefRules []string `json:"refRules,omitempty"`
 }
 
 //+kubebuilder:object:root=true

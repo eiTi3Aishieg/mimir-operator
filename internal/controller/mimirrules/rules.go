@@ -46,11 +46,15 @@ func (r *MimirRulesReconciler) syncRulesToRuler(ctx context.Context, mc *mimirap
 		return err
 	}
 
+	// Reset stored prometheus rules
+	mr.Status.RefRules = []string{}
+
 	// Synchronize each Rule on the Mimir Ruler
 	for namespace, ruleGroup := range unpackedRules {
 		if err := mc.CreateRuleGroupStr(ctx, namespace, ruleGroup); err != nil {
 			return err
 		}
+		mr.Status.RefRules = append(mr.Status.RefRules, namespace)
 	}
 
 	// Find the namespaces on Mimir that are NOT in our list of WANTED rules
