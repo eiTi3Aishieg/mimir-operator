@@ -11,6 +11,16 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// RuleNamespace is used to parse a slightly modified prometheus
+// rule file format, if no namespace is set, the default namespace
+// is used. Namespace is functionally the same as a file name.
+type RuleNamespace struct {
+	// Namespace field only exists for setting namespace in namespace body instead of file name
+	Namespace string `yaml:"namespace,omitempty"`
+
+	Groups []RuleGroup `yaml:"groups"`
+}
+
 // Wrapper around Prometheus rulefmt.
 
 // RuleGroup is a list of sequentially evaluated recording and alerting rules.
