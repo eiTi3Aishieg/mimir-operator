@@ -52,8 +52,6 @@ func (r *MimirClient) CreateRuleGroupStr(ctx context.Context, namespace, rg stri
 
 	yaml.Unmarshal([]byte(rg), &rns)
 
-	fmt.Printf("%+v", rns)
-
 	for _, group := range rns.Groups {
 		r.CreateRuleGroup(ctx, namespace, group)
 	}
