@@ -36,9 +36,9 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	mimirrandgenxyzv1alpha1 "mimir-operator/api/v1alpha1"
-	amCtrl "mimir-operator/internal/controller/mimiralertmanagerconfig"
-	mimirCtrl "mimir-operator/internal/controller/mimirrules"
+	mimirrandgenxyzv1alpha1 "github.com/AmiditeX/mimir-operator/api/v1alpha1"
+	amCtrl "github.com/AmiditeX/mimir-operator/internal/controller/mimiralertmanagerconfig"
+	mimirCtrl "github.com/AmiditeX/mimir-operator/internal/controller/mimirrules"
 	//+kubebuilder:scaffold:imports
 )
 

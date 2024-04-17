@@ -2,9 +2,10 @@ package mimiralertmanagerconfig
 
 import (
 	"context"
-	domain "mimir-operator/api/v1alpha1"
-	"mimir-operator/internal/mimirtool"
 	"os"
+
+	domain "github.com/AmiditeX/mimir-operator/api/v1alpha1"
+	"github.com/AmiditeX/mimir-operator/internal/mimirtool"
 
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )

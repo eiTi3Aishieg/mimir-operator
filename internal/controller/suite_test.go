@@ -14,7 +14,7 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	domain "mimir-operator/api/v1alpha1"
+	domain "github.com/AmiditeX/mimir-operator/api/v1alpha1"
 	//+kubebuilder:scaffold:imports
 )
 

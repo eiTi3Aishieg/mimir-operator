@@ -1,4 +1,4 @@
-module mimir-operator
+module github.com/AmiditeX/mimir-operator
 
 go 1.21
 

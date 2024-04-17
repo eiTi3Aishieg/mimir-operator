@@ -12,7 +12,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	domain "mimir-operator/api/v1alpha1"
+	domain "github.com/AmiditeX/mimir-operator/api/v1alpha1"
 )
 
 var k8sClient client.Client

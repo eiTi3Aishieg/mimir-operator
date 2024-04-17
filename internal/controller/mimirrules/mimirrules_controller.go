@@ -3,7 +3,8 @@ package mimirrules
 import (
 	"context"
 	"fmt"
-	"mimir-operator/internal/utils"
+
+	"github.com/AmiditeX/mimir-operator/internal/utils"
 
 	prometheus "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -15,7 +16,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	domain "mimir-operator/api/v1alpha1"
+	domain "github.com/AmiditeX/mimir-operator/api/v1alpha1"
 )
 
 const (
