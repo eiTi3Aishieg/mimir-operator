@@ -113,6 +113,8 @@ func (r *MimirRulesReconciler) handleCreationAndChanges(ctx context.Context, mr 
 		return err
 	}
 
+	log.FromContext(ctx).Info("MimirRules correctly synchronize")
+
 	return nil
 }
 
