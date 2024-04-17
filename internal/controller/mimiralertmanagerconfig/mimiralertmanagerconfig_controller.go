@@ -48,7 +48,7 @@ func (r *MimirAlertManagerConfigReconciler) Reconcile(ctx context.Context, req c
 
 	mc, err := r.createMimirClient(ctx, amc)
 	if err != nil {
-		// Status is set only on failure to delete (the status is going to be deleted anyway if it succeeds)
+		// Update status with an error if we can't create a client for Mimir Api
 		return ctrl.Result{}, r.setStatus(ctx, amc, err)
 	}
 
@@ -81,14 +81,9 @@ func (r *MimirAlertManagerConfigReconciler) Reconcile(ctx context.Context, req c
 }
 
 func (r *MimirAlertManagerConfigReconciler) createMimirClient(ctx context.Context, amc *domain.MimirAlertManagerConfig) (*mimirapi.MimirClient, error) {
-
 	auth, err := utils.ExtractAuth(ctx, r.Client, amc.Spec.Auth, amc.ObjectMeta.Namespace)
 	if err != nil {
 		return nil, fmt.Errorf("failed to extract authentication settings: %w", err)
-	}
-	// if no auth provided init empty object to avoid error
-	if auth == nil {
-		auth = &utils.Authentication{}
 	}
 
 	c, err := mimirapi.New(mimirapi.Config{

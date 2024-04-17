@@ -3,6 +3,7 @@ package utils
 import (
 	"context"
 	"fmt"
+
 	mimirrandgenxyzv1alpha1 "github.com/AmiditeX/mimir-operator/api/v1alpha1"
 
 	v1 "k8s.io/api/core/v1"
@@ -67,7 +68,7 @@ func FindValueByKeyInSecret(ctx context.Context, c client.Client, secretName, se
 // called without any authentication enabled, thus having no need for a mandatory authentication field in the CRDs
 func ExtractAuth(ctx context.Context, client client.Client, auth *mimirrandgenxyzv1alpha1.Auth, namespace string) (*Authentication, error) {
 	if auth == nil { // No authentication settings were provided
-		return nil, nil
+		return &Authentication{}, nil
 	}
 
 	if auth.Token != "" { // Token plaintext value has precedence over everything else
@@ -106,5 +107,5 @@ func ExtractAuth(ctx context.Context, client client.Client, auth *mimirrandgenxy
 		}, nil
 	}
 
-	return nil, nil // Auth settings were provided but all uninitialized
+	return &Authentication{}, nil // Auth settings were provided but all uninitialized
 }

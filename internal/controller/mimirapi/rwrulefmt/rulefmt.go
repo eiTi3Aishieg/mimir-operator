@@ -6,7 +6,7 @@
 package rwrulefmt
 
 import (
-	"mimir-operator/internal/controller/mimirapi/rwrulefmt/model"
+	"github.com/AmiditeX/mimir-operator/internal/controller/mimirapi/rwrulefmt/model"
 
 	"gopkg.in/yaml.v3"
 )

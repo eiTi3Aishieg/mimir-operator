@@ -17,7 +17,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v3"
 
-	"mimir-operator/internal/controller/mimirapi/rwrulefmt"
+	"github.com/AmiditeX/mimir-operator/internal/controller/mimirapi/rwrulefmt"
 )
 
 // ruleElement describes one element returned by Mimir when listing all the rules for a tenant

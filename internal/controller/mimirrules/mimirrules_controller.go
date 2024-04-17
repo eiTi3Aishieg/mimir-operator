@@ -50,7 +50,7 @@ func (r *MimirRulesReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	mc, err := r.createMimirClient(ctx, mr)
 	if err != nil {
-		// Status is set only on failure to delete (the status is going to be deleted anyway if it succeeds)
+		// Update status with an error if we can't create a client for Mimir Api
 		return ctrl.Result{}, r.setStatus(ctx, mr, err)
 	}
 
@@ -83,14 +83,9 @@ func (r *MimirRulesReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 }
 
 func (r *MimirRulesReconciler) createMimirClient(ctx context.Context, mr *domain.MimirRules) (*mimirapi.MimirClient, error) {
-
 	auth, err := utils.ExtractAuth(ctx, r.Client, mr.Spec.Auth, mr.ObjectMeta.Namespace)
 	if err != nil {
 		return nil, fmt.Errorf("failed to extract authentication settings: %w", err)
-	}
-	// if no auth provided init empty object to avoid error
-	if auth == nil {
-		auth = &utils.Authentication{}
 	}
 
 	c, err := mimirapi.New(mimirapi.Config{
