@@ -24,7 +24,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"mimir-operator/test/utils"
+	"github.com/AmiditeX/mimir-operator/test/utils"
 )
 
 const namespace = "output-dir-system"

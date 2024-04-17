@@ -4,10 +4,11 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	domain "mimir-operator/api/v1alpha1"
-	"mimir-operator/internal/mimirtool"
-	"mimir-operator/internal/utils"
 	"os"
+
+	domain "github.com/AmiditeX/mimir-operator/api/v1alpha1"
+	"github.com/AmiditeX/mimir-operator/internal/mimirtool"
+	"github.com/AmiditeX/mimir-operator/internal/utils"
 
 	prometheus "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"gopkg.in/yaml.v2"
