@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
 
 	domain "github.com/AmiditeX/mimir-operator/api/v1alpha1"
 	"github.com/AmiditeX/mimir-operator/internal/controller/mimirapi"
@@ -56,6 +57,7 @@ func (r *MimirRulesReconciler) syncRulesToRuler(ctx context.Context, mc *mimirap
 		}
 		mr.Status.RefRules = append(mr.Status.RefRules, namespace)
 	}
+	sort.Strings(mr.Status.RefRules)
 
 	// Find the namespaces on Mimir that are NOT in our list of WANTED rules
 	// Those namespaces might have been created earlier by the operator, but the MimirRules selectors
