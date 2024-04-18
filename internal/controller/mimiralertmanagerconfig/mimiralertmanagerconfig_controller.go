@@ -111,6 +111,7 @@ func (r *MimirAlertManagerConfigReconciler) handleCreationAndChanges(ctx context
 		return err
 	}
 
+	log.FromContext(ctx).Info("MimirAlertManagerConfig correctly synchronized")
 	return nil
 }
 
