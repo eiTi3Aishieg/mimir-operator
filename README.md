@@ -146,7 +146,6 @@ More information can be found via the [Kubebuilder Documentation](https://book.k
 - Bump the chart version in `deploy/helm/mimir-operator/Chart.yml` with the version of the upcoming release
 - Run `make helm/docs` to regenerate the Helm README with any new documentation of the values
 - Check if `config/rbac/role.yaml` has changed. If it did, edit the RBAC config in the Helm Chart (`deploy/helm/mimir-operator/templates/rbac.yaml`) to reflect the changes
-- Change the version of the project in `Makefile` to the upcoming release
 - Run `git checkout -b [RELEASE]`
 - Push the new branch to the Git
 - Merge and create a Release on Github

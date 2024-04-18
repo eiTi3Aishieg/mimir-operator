@@ -4,19 +4,20 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/AmiditeX/mimir-operator/internal/utils"
-
 	prometheus "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	domain "github.com/AmiditeX/mimir-operator/api/v1alpha1"
+	"github.com/AmiditeX/mimir-operator/internal/controller/mimirapi"
+	"github.com/AmiditeX/mimir-operator/internal/utils"
 )
 
 const (
@@ -48,6 +49,12 @@ func (r *MimirRulesReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 
 	log.FromContext(ctx).Info("Running reconcile on MimirRules")
 
+	mc, err := r.createMimirClient(ctx, mr)
+	if err != nil {
+		// Update status with an error if we can't create a client for Mimir Api
+		return ctrl.Result{}, r.setStatus(ctx, mr, err)
+	}
+
 	// Examine DeletionTimestamp to determine if object is under deletion
 	if mr.ObjectMeta.DeletionTimestamp.IsZero() {
 		// The object is not being deleted, so if it does not have our finalizer,
@@ -62,7 +69,7 @@ func (r *MimirRulesReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 	} else {
 		// The object is being deleted
 		if controllerutil.ContainsFinalizer(mr, mimirFinalizer) {
-			if err := r.handleDeletion(ctx, mr); err != nil {
+			if err := r.handleDeletion(ctx, mr, mc); err != nil {
 				// Status is set only on failure to delete (the status is going to be deleted anyway if it succeeds)
 				return ctrl.Result{}, r.setStatus(ctx, mr, err)
 			}
@@ -73,44 +80,56 @@ func (r *MimirRulesReconciler) Reconcile(ctx context.Context, req ctrl.Request) 
 		}
 	}
 
-	return ctrl.Result{}, r.handleCreationAndChanges(ctx, mr)
+	return ctrl.Result{}, r.handleCreationAndChanges(ctx, mr, mc)
+}
+
+func (r *MimirRulesReconciler) createMimirClient(ctx context.Context, mr *domain.MimirRules) (*mimirapi.MimirClient, error) {
+	auth, err := utils.ExtractAuth(ctx, r.Client, mr.Spec.Auth, mr.ObjectMeta.Namespace)
+	if err != nil {
+		return nil, fmt.Errorf("failed to extract authentication settings: %w", err)
+	}
+
+	c, err := mimirapi.New(mimirapi.Config{
+		User:      auth.Username,
+		Key:       auth.Key,
+		AuthToken: auth.Token,
+		Address:   mr.Spec.URL,
+		ID:        mr.Spec.ID,
+	})
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to create mimir client: %w", err)
+	}
+
+	return c, nil
 }
 
 // handleCreationAndChanges handles reconciliation of MimirRules for events that are not a deletion
 // This means that this function will be called for any modification in a MimirRules or for
 // any creation of a new MimirRules in the API. It is also called periodically for scheduled
 // reconciliation and at the startup of the controller.
-func (r *MimirRulesReconciler) handleCreationAndChanges(ctx context.Context, mr *domain.MimirRules) error {
-	reconciliationError := r.reconcileRules(ctx, mr)
+func (r *MimirRulesReconciler) handleCreationAndChanges(ctx context.Context, mr *domain.MimirRules, mc *mimirapi.MimirClient) error {
+	reconciliationError := r.reconcileRules(ctx, mr, mc)
 	if err := r.setStatus(ctx, mr, reconciliationError); err != nil {
 		return err
 	}
+
+	log.FromContext(ctx).Info("MimirRules correctly synchronized")
 
 	return nil
 }
 
 // handleDeletion handles cleaning up after the deletion of a MimirRules
-func (r *MimirRulesReconciler) handleDeletion(ctx context.Context, mr *domain.MimirRules) error {
+func (r *MimirRulesReconciler) handleDeletion(ctx context.Context, mr *domain.MimirRules, mc *mimirapi.MimirClient) error {
 	log.FromContext(ctx).Info("Running reconciliation on deletion of a MimirRules")
-
-	auth, err := utils.ExtractAuth(ctx, r.Client, mr.Spec.Auth, mr.ObjectMeta.Namespace)
-	if err != nil {
-		return fmt.Errorf("failed to extract authentication settings: %w", err)
-	}
-
-	return r.deleteRulesForTenant(ctx, auth, mr)
+	return r.deleteRulesForTenant(ctx, mr, mc)
 }
 
 // reconcileRules ensures Mimir is synced with the PrometheusRules associated with a MimirRules
-func (r *MimirRulesReconciler) reconcileRules(ctx context.Context, mr *domain.MimirRules) error {
+func (r *MimirRulesReconciler) reconcileRules(ctx context.Context, mr *domain.MimirRules, mc *mimirapi.MimirClient) error {
 	log.FromContext(ctx).Info("Running reconciliation of the rules")
 
-	auth, err := utils.ExtractAuth(ctx, r.Client, mr.Spec.Auth, mr.ObjectMeta.Namespace)
-	if err != nil {
-		return fmt.Errorf("failed to extract authentication settings: %w", err)
-	}
-
-	return r.syncRulesToRuler(ctx, auth, mr)
+	return r.syncRulesToRuler(ctx, mc, mr)
 }
 
 // reconcileOnPrometheusRuleChange sends a reconcile request to EVERY MimirRule on the cluster
@@ -162,5 +181,8 @@ func (r *MimirRulesReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Watches( // Setup WATCH on PrometheusRules to dynamically reload MimirRules into the MimirRuler if a selected rule has been changed
 			&prometheus.PrometheusRule{},
 			handler.EnqueueRequestsFromMapFunc(r.reconcileOnPrometheusRuleChange)).
+		WithOptions(controller.Options{
+			MaxConcurrentReconciles: 32,
+		}).
 		Complete(r)
 }
