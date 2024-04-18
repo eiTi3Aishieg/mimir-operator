@@ -149,36 +149,34 @@ func (r *MimirRulesReconciler) reconcileOnPrometheusRuleChange(ctx context.Conte
 	pr := &prometheus.PrometheusRule{}
 	err = r.Get(ctx, types.NamespacedName{Namespace: rule.GetNamespace(), Name: rule.GetName()}, pr)
 
-	requests := make([]reconcile.Request, len(allMimirRules.Items))
+	requests := make([]reconcile.Request, 0)
 	// If Prometheus Rule is not found then it must have been deleted
 	if err != nil && errors.IsNotFound(err) {
 		// We update every MimirRule concerned by the delete Prometheus Rule
-		for i, item := range allMimirRules.Items {
-
+		for _, item := range allMimirRules.Items {
 			namespaceAndName := rule.GetNamespace() + "_" + rule.GetName()
-			if slices.Contains(item.Status.RefRules, namespaceAndName) {
 
-				requests[i] = reconcile.Request{
+			if slices.Contains(item.Status.RefRules, namespaceAndName) {
+				requests = append(requests, reconcile.Request{
 					NamespacedName: types.NamespacedName{
 						Name:      item.GetName(),
 						Namespace: item.GetNamespace(),
-					}}
+					}})
 			}
 		}
 	} else { // Prometheus rule have been updated or created, update only concerned rules
-		for i, item := range allMimirRules.Items {
+		for _, item := range allMimirRules.Items {
 			promRulesList, _ := r.findPrometheusRulesFromLabels(ctx, item.Spec.Rules.Selectors)
 			namespaceAndName := rule.GetNamespace() + "_" + rule.GetName()
 			// If the updated/created rule affect the MimirRule then we request a reconcialition on it
 			// We check if the MimirRule match with the Prometheus Rule
 			// But also if the MimirRule previously match the Prometheus Rule (for example if the group change for the rule and not matching anymore)
 			if contains(promRulesList, rule.GetNamespace(), rule.GetName()) || slices.Contains(item.Status.RefRules, namespaceAndName) {
-				requests[i] = reconcile.Request{
+				requests = append(requests, reconcile.Request{
 					NamespacedName: types.NamespacedName{
 						Name:      item.GetName(),
 						Namespace: item.GetNamespace(),
-					},
-				}
+					}})
 			}
 		}
 	}
