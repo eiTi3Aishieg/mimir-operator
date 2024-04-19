@@ -297,8 +297,9 @@ func applyExternalLabels(labels map[string]string, list *prometheus.PrometheusRu
 
 				// Insert our label
 				for key, value := range labels {
-					// Avoid to label already set in the rule by override
-					if rule.Labels[key] == "" {
+					// Set label only if the key doesn't already exists
+					// This should avoid to overrind label set in rule's overrides
+					if _, ok := rule.Labels[key]; !ok {
 						rule.Labels[key] = value
 					}
 				}
