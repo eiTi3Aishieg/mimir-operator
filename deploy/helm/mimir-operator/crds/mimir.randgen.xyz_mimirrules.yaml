@@ -185,6 +185,13 @@ spec:
               error:
                 description: Error describes the last synchronization error
                 type: string
+              refRules:
+                description: |-
+                  Store concerned which prometheus rules are used in reference
+                  This allow a better change detection
+                items:
+                  type: string
+                type: array
               status:
                 description: Status describes whether the rules are synchronized
                 type: string
