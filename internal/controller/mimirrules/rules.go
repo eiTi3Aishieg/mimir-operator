@@ -291,7 +291,10 @@ func applyExternalLabels(labels map[string]string, list *prometheus.PrometheusRu
 
 				// Insert our label
 				for key, value := range labels {
-					rule.Labels[key] = value
+					// Avoid to label already set in the rule by override
+					if rule.Labels[key] == "" {
+						rule.Labels[key] = value
+					}
 				}
 
 				item.Spec.Groups[g].Rules[r] = rule // We modified a copy of the rule, put it back in the *Rule }
