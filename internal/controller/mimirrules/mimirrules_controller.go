@@ -3,8 +3,10 @@ package mimirrules
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	prometheus "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -143,13 +145,39 @@ func (r *MimirRulesReconciler) reconcileOnPrometheusRuleChange(ctx context.Conte
 		return []reconcile.Request{}
 	}
 
-	requests := make([]reconcile.Request, len(allMimirRules.Items))
-	for i, item := range allMimirRules.Items {
-		requests[i] = reconcile.Request{
-			NamespacedName: types.NamespacedName{
-				Name:      item.GetName(),
-				Namespace: item.GetNamespace(),
-			},
+	// Check for existance of the rule
+	pr := &prometheus.PrometheusRule{}
+	err = r.Get(ctx, types.NamespacedName{Namespace: rule.GetNamespace(), Name: rule.GetName()}, pr)
+
+	requests := make([]reconcile.Request, 0)
+	// If Prometheus Rule is not found then it must have been deleted
+	if err != nil && errors.IsNotFound(err) {
+		// We update every MimirRule concerned by the delete Prometheus Rule
+		for _, item := range allMimirRules.Items {
+			namespaceAndName := rule.GetNamespace() + "_" + rule.GetName()
+
+			if slices.Contains(item.Status.RefRules, namespaceAndName) {
+				requests = append(requests, reconcile.Request{
+					NamespacedName: types.NamespacedName{
+						Name:      item.GetName(),
+						Namespace: item.GetNamespace(),
+					}})
+			}
+		}
+	} else { // Prometheus rule have been updated or created, update only concerned rules
+		for _, item := range allMimirRules.Items {
+			promRulesList, _ := r.findPrometheusRulesFromLabels(ctx, item.Spec.Rules.Selectors)
+			namespaceAndName := rule.GetNamespace() + "_" + rule.GetName()
+			// If the updated/created rule affect the MimirRule then we request a reconcialition on it
+			// We check if the MimirRule match with the Prometheus Rule
+			// But also if the MimirRule previously match the Prometheus Rule (for example if the group change for the rule and not matching anymore)
+			if contains(promRulesList, rule.GetNamespace(), rule.GetName()) || slices.Contains(item.Status.RefRules, namespaceAndName) {
+				requests = append(requests, reconcile.Request{
+					NamespacedName: types.NamespacedName{
+						Name:      item.GetName(),
+						Namespace: item.GetNamespace(),
+					}})
+			}
 		}
 	}
 
@@ -185,4 +213,14 @@ func (r *MimirRulesReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			MaxConcurrentReconciles: 32,
 		}).
 		Complete(r)
+}
+
+// Check if the prometheus rule list has a matching rule with namespace and name combinaison
+func contains(pL *prometheus.PrometheusRuleList, namespace, name string) bool {
+	for _, p := range pL.Items {
+		if p.Name == name && p.Namespace == namespace {
+			return true
+		}
+	}
+	return false
 }
