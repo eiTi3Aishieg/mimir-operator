@@ -46,14 +46,20 @@ func (r *MimirClient) CreateRuleGroup(ctx context.Context, namespace string, rg 
 	return nil
 }
 
-// CreateRuleGroup creates a new rule group
+// CreateRuleGroupStr creates a new rule group from string
 func (r *MimirClient) CreateRuleGroupStr(ctx context.Context, namespace, rg string) error {
 	var rns rwrulefmt.RuleNamespace
 
-	yaml.Unmarshal([]byte(rg), &rns)
+	err := yaml.Unmarshal([]byte(rg), &rns)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal rule group: %w", err)
+	}
 
 	for _, group := range rns.Groups {
-		r.CreateRuleGroup(ctx, namespace, group)
+		err := r.CreateRuleGroup(ctx, namespace, group)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
