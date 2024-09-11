@@ -248,7 +248,9 @@ spec:
 ```
 
 The Rules installed in the Ruler by the operator will all have those labels appended to their list of labels.  
-This effectively has the same effect as overriding each individual alert to add a new label.
+This effectively has the same effect as overriding each individual alert to add a new label.  
+Keep in mind that if a specific label is already present on a PrometheusRule, it will not be overriden by the `externalLabels` directive. External labels behave as fallback values.  
+For example, if PrometheusRule `A` has the label `mylabel: example` and you're adding an externalLabel to a MimirRule that targets this PrometheusRule with a value of `mylabel: newtext`, the Rule sent to the Ruler will keep the original `mylabel: example` value. If you really wish to replace the label, use overrides.x
 
 ### MimirAlertManagerConfig
 
